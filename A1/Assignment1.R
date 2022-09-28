@@ -20,11 +20,11 @@ table$Date <- as.POSIXct(table$Date, format= "%d/%m/%Y")
 
 # EXTRACT 2ND WEEKS OF INFO
 start <- as.POSIXct("07/01/2007",format= "%d/%m/%Y")
-end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
+end <- as.POSIXct("13/01/2007",format= "%d/%m/%Y")
 table <- table[table$Date >=  start & table$Date <= end,]
 
-dayTimeStart = "09:00:00" # is == nightTimeEnd
-nightTimeStart = "17:00:00" # is == dayTimeEnd
+dayTimeStart = "09:00:00" # is == nightTimeEnd, day = [9am,5pm]
+nightTimeStart = "17:00:00" # is == dayTimeEnd, night = (5pm,9am)
 
 #############################################
 # 1 - done by Nicole
@@ -46,21 +46,47 @@ sapply(pwVoltageData, function(x) sd(x, na.rm=TRUE))
 ###
 PowerTimeDate <- table[,c(2,3,4,10)]
 
+# Create subDFs for day and night
+PowerTimeNight <- PowerTimeDate[PowerTimeDate$Time < dayTimeStart | PowerTimeDate$Time > nightTimeStart,]
+PowerTimeDay <- PowerTimeDate[PowerTimeDate$Time >= dayTimeStart & PowerTimeDate$Time <= nightTimeStart,]
+
 # Create subDFs for weekday and weekend
-PowerTimeWeekDay <- PowerTimeDate[PowerTimeDate$WeekdayBool == 1,]
-PowerTimeWeekEnd <- PowerTimeDate[PowerTimeDate$WeekdayBool == 0,]
-  # TODO Daytime min weekdays for i = 3 4
-  # TODO Daytime min weekends for i = 3 4
-  
-  # TODO Daytime max weekdays for i = 3 4
-  # TODO Daytime max weekends for i = 3 4
-  
-  # TODO Ntime min weekdays for i = 3 4
-  # TODO Ntime min weekends for i = 3 4
-  
-  # TODO Ntime max weekdays for i = 3 4
-  # TODO Ntime max weekends for i = 3 4
-  cat("\n")
+WeekdaySplitNight <- split (PowerTimeNight, PowerTimeNight$WeekdayBoo)
+WeekdaySplitDay <- split (PowerTimeDay, PowerTimeDay$WeekdayBoo)
+
+# Calc min/max for weekend/day for night
+i = 0
+for(nTable in WeekdaySplitNight){
+  if (i == 0){
+    cat("WEEKEND\n")
+    i=1
+  }
+  else{
+    cat("WEEKDAY\n")
+    i=0
+  }
+  nMin <- sapply(nTable[,c(2,3)], function(x) min(x, na.rm=TRUE))
+  nMax <- sapply(nTable[,c(2,3)], function(x) max(x, na.rm=TRUE))
+  cat("Min for (Active, Reactive) during Night", nMin)
+  cat("\nMax for (Active, Reactive) during Night", nMax)
+  cat("\n\n") # 1st value is weekdayBool = 0, so weekend
+}
+
+# Calc min/max for weekend/day for night
+for(dTable in WeekdaySplitDay){
+  if (i == 0){
+    cat("WEEKEND\n")
+    i=1
+  }
+  else{
+    cat("WEEKDAY\n")
+    i=0
+  }
+  dMin <- sapply(dTable[,c(2,3)], function(x) min(x, na.rm=TRUE))
+  dMax <- sapply(dTable[,c(2,3)], function(x) max(x, na.rm=TRUE))
+  cat("Min for (Active, Reactive) during Day", dMin)
+  cat("\nMax for (Active, Reactive) during Day", dMax)
+  cat("\n\n") # 1st value is weekdayBool = 0, so weekend
 }
 
 
