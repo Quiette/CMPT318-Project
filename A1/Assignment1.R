@@ -12,6 +12,9 @@ table <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
 table$Date <- as.POSIXct(table$Date, format= "%d/%m/%Y")
 
 # EXTRACT 2ND WEEKS OF INFO TODO
+start <- as.POSIXct("07/01/2007",format= "%d/%m/%Y")
+end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
+table <- table[table$Date >=  start & table$Date <= end,]
 
 #############################################
 # 1 - done by Nicole
@@ -24,7 +27,7 @@ table$WeekdayBool <- weekdayCol
 
 for (i in 1:3){
   print(colnames(table)[i])
-  print(head(table[,i]))
+  print(tail(table[,i]))
   cat("\n")
 }
 
