@@ -19,8 +19,8 @@ table <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
 table$Date <- as.POSIXct(table$Date, format= "%d/%m/%Y")
 
 # EXTRACT 2ND WEEKS OF INFO
-start <- as.POSIXct("07/01/2007",format= "%d/%m/%Y")
-end <- as.POSIXct("13/01/2007",format= "%d/%m/%Y")
+start <- as.POSIXct("08/01/2007",format= "%d/%m/%Y")
+end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
 table <- table[table$Date >=  start & table$Date <= end,]
 
 dayTimeStart = "09:00:00" # is == nightTimeEnd, day = [9am,5pm]
