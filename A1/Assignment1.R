@@ -7,6 +7,12 @@ library("lubridate")
 #install.packages("psych")
 library("psych") 
 
+
+#install.packages("Hmisc")
+library("Hmisc")
+
+#install.packages("corrplot")
+library("corrplot")
 #install.packages("modeest")
 library("modeest") 
 
@@ -92,6 +98,12 @@ for(dTable in WeekSplitDay){
 
 #############################################
 # 2 - done by Kirby
+
+table2 <- subset(table, select = -c(Date,Time,WeekdayBool))
+res <- corr.test(table2, y = NULL, use = "complete",method="pearson",adjust="holm", 
+                 alpha=.01)
+corrplot(res$r, type="upper", order="hclust", p.mat = res$P, sig.level = 0.01, addCoef.col = 'black', is.corr = FALSE, insig = "label_sig")
+
 
 #############################################
 # 3 - done by Gavin
