@@ -1,24 +1,25 @@
-install.packages("lubridate")
+#install.packages("lubridate")
 library("rstudioapi")
 
-install.packages("lubridate")
+#install.packages("lubridate")
 library("lubridate")
 
-install.packages("psych")
+#install.packages("psych")
 library("psych") 
 
-install.packages("modeest")
+#install.packages("modeest")
 library("modeest") 
 
 
 dayTimeStart = "09:00:00"
 nightTimeStart = "17:00:00"
 
-df <- read.csv("Group_Assignment_1_Dataset.txt", 
-               header = TRUE, sep = ",", dec = ".")
-class(df$Date)
-df$Date <- as.Date(df$Date, "%d/%m/%Y")
-df <- df[df$Date > "2007-01-07" & df$Date < "2007-01-15", ]
+df <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
+
+df$Date <- as.POSIXct(df$Date, format= "%d/%m/%Y")
+start <- as.POSIXct("08/01/2007",format= "%d/%m/%Y")
+end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
+df <- df[df$Date >=  start & df$Date <= end,]
 class(df$Date)
 
 # Create weekday column, 1 if weekday, 0 if weekend
@@ -31,21 +32,21 @@ df$WeekdayBool <- weekdayCol
 PowerTimeDate <- df[,c(1,2,6,10)]
 
 # Create sub DFs for weekday days and weekday nights
-PowerTimeWkdayDay <- PowerTimeDate[PowerTimeDate$Time >= dayTimeStart & 
-                                PowerTimeDate$Time <= nightTimeStart 
+PowerTimeWkdayDay <- PowerTimeDate[(PowerTimeDate$Time >= dayTimeStart & 
+                                PowerTimeDate$Time <= nightTimeStart) 
                                 & PowerTimeDate$WeekdayBool == 1, ]
 
-PowerTimeWkdayNight <- PowerTimeDate[PowerTimeDate$Time < dayTimeStart | 
-                                    PowerTimeDate$Time > nightTimeStart & 
+PowerTimeWkdayNight <- PowerTimeDate[(PowerTimeDate$Time < dayTimeStart | 
+                                    PowerTimeDate$Time > nightTimeStart) & 
                                     PowerTimeDate$WeekdayBool == 1, ]
 
 # Create sub DFs for weekend day and weekend night
-PowerTimeWkendDay <- PowerTimeDate[PowerTimeDate$Time >= dayTimeStart & 
-                                     PowerTimeDate$Time <= nightTimeStart 
+PowerTimeWkendDay <- PowerTimeDate[(PowerTimeDate$Time >= dayTimeStart & 
+                                     PowerTimeDate$Time <= nightTimeStart) 
                                    & PowerTimeDate$WeekdayBool == 0, ]
 
-PowerTimeWkendNight <- PowerTimeDate[PowerTimeDate$Time < dayTimeStart |
-                                        PowerTimeDate$Time > nightTimeStart & 
+PowerTimeWkendNight <- PowerTimeDate[(PowerTimeDate$Time < dayTimeStart |
+                                        PowerTimeDate$Time > nightTimeStart) & 
                                         PowerTimeDate$WeekdayBool == 0, ]
 
 # Time series for day weekdays & night weekdays
