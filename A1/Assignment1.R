@@ -1,13 +1,19 @@
-install.packages("lubridate")
+#install.packages("lubridate")
 library("rstudioapi")
 
-install.packages("lubridate")
+#install.packages("lubridate")
 library("lubridate")
 
-install.packages("psych")
+#install.packages("psych")
 library("psych") 
 
-install.packages("modeest")
+#install.packages("Hmisc")
+library("Hmisc")
+
+#install.packages("corrplot")
+library("corrplot")
+
+#install.packages("modeest")
 library("modeest") 
 
 # Set working directory to file location
@@ -51,12 +57,12 @@ PowerTimeNight <- PowerTimeDate[PowerTimeDate$Time < dayTimeStart | PowerTimeDat
 PowerTimeDay <- PowerTimeDate[PowerTimeDate$Time >= dayTimeStart & PowerTimeDate$Time <= nightTimeStart,]
 
 # Create subDFs for weekday and weekend
-WeekdaySplitNight <- split (PowerTimeNight, PowerTimeNight$WeekdayBoo)
-WeekdaySplitDay <- split (PowerTimeDay, PowerTimeDay$WeekdayBoo)
+WeekSplitNight <- split (PowerTimeNight, PowerTimeNight$WeekdayBool)
+WeekSplitDay <- split (PowerTimeDay, PowerTimeDay$WeekdayBool)
 
 # Calc min/max for weekend/day for night
 i = 0
-for(nTable in WeekdaySplitNight){
+for(nTable in WeekSplitNight){
   if (i == 0){
     cat("WEEKEND\n")
     i=1
@@ -73,7 +79,7 @@ for(nTable in WeekdaySplitNight){
 }
 
 # Calc min/max for weekend/day for night
-for(dTable in WeekdaySplitDay){
+for(dTable in WeekSplitDay){
   if (i == 0){
     cat("WEEKEND\n")
     i=1
@@ -92,6 +98,11 @@ for(dTable in WeekdaySplitDay){
 
 #############################################
 # 2 - done by Kirby
+
+table2 <- subset(table, select = -c(Date,Time,WeekdayBool))
+res <- corr.test(table2, y = NULL, use = "complete",method="pearson",adjust="holm", alpha=.01)
+corrplot(res$r, type="upper", order="hclust", p.mat = res$P, sig.level = 0.01, addCoef.col = 'black', is.corr = FALSE, insig = "label_sig")
+
 
 #############################################
 # 3 - done by Gavin
