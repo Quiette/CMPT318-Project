@@ -7,8 +7,6 @@ library("lubridate")
 #install.packages("psych")
 library("psych") 
 
-#install.packages("modeest")
-library("modeest")  
 
 #install.packages("Hmisc")
 library("Hmisc")
