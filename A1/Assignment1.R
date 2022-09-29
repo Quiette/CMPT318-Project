@@ -1,14 +1,20 @@
-install.packages("lubridate")
+#install.packages("lubridate")
 library("rstudioapi")
 
-install.packages("lubridate")
+#install.packages("lubridate")
 library("lubridate")
 
-install.packages("psych")
+#install.packages("psych")
 library("psych") 
 
-install.packages("modeest")
-library("modeest") 
+#install.packages("modeest")
+library("modeest")  
+
+#install.packages("Hmisc")
+library("Hmisc")
+
+#install.packages("corrplot")
+library("corrplot")
 
 # Set working directory to file location
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -92,6 +98,12 @@ for(dTable in WeekdaySplitDay){
 
 #############################################
 # 2 - done by Kirby
+
+table2 <- subset(table, select = -c(Date,Time,WeekdayBool))
+res <- corr.test(table2, y = NULL, use = "complete",method="pearson",adjust="holm", 
+                 alpha=.01)
+corrplot(res$r, type="upper", order="hclust", p.mat = res$P, sig.level = 0.01, addCoef.col = 'black', is.corr = FALSE, insig = "label_sig")
+
 
 #############################################
 # 3 - done by Gavin
