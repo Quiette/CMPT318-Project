@@ -10,7 +10,11 @@ library("psych")
 #install.packages("modeest")
 library("modeest") 
 
+install.packages("ggplot2")
 library(ggplot2)
+
+install.packages("dplyr")
+library(dplyr)
 
 # Set working directory to file location
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -18,6 +22,11 @@ getwd()
 
 dayTimeStart = "09:00:00"
 nightTimeStart = "17:00:00"
+
+subDayStart = "10:00:00"
+subDayEnd = "14:00:00"
+subNightStart = "21:00:00"
+subNightEnd = "02:00:00"
 
 df <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
 
@@ -71,21 +80,45 @@ wkendDay_avg$Time = as.POSIXct(wkendDay_avg$Group.1, format = "%H:%M:%S")
 wkdayNight_avg$Time = as.POSIXct(wkdayNight_avg$Group.1, format = "%H:%M:%S")
 wkdayDay_avg$Time = as.POSIXct(wkdayDay_avg$Group.1, format = "%H:%M:%S")
 
-WkEndNightPlot <- plot(x = wkendNight_avg$Time, y = wkendNight_avg$x)
-WkdayNightPlot <-plot(x = wkdayNight_avg$Time, y = wkdayNight_avg$x)
+# Extract sub-time intervals for graph (10am - 2pm day), (9pm - 2am for night)
+subWkdayDay_avg <- wkdayDay_avg[wkdayDay_avg$Group.1 >= subDayStart 
+                                  & wkdayDay_avg$Group.1 <= subDayEnd, ]
+subWkendDay_avg <- wkendDay_avg[wkendDay_avg$Group.1 >= subDayStart
+                                & wkendDay_avg$Group.1 <= subDayEnd, ]
+subWkendNight_avg <- wkendNight_avg[wkendNight_avg$Group.1 >= subNightStart 
+                                    | wkendNight_avg$Group.1 <= subNightEnd, ]
+subWkdayNight_avg <- wkdayNight_avg[wkdayNight_avg$Group.1 >= subNightStart 
+                                    | wkdayNight_avg$Group.1 <= subNightEnd, ]
 
-WkEndDayPlot <- plot(x = wkendDay_avg$Time, y = wkendDay_avg$x, type = "l", lty = 1, lwd=0.5, col = "red")
-points(wkdayDay_avg$Time, y = wkdayDay_avg$x, type = "l", lty = 5, lwd=0.5, col = "blue")
-legend("top", legend=c("Weekday", "weekend"),col=c("blue", "red"), cex=0.8,title="Data Legend", text.font=4, lty = 1:1)
+# Make weekday and weekend day graph
+WkEndDayPlot <- plot(x = subWkendDay_avg$Time, y = subWkendDay_avg$x, type = "l",
+                     lty = 1, lwd=0.5, col = "red")
+points(subWkdayDay_avg$Time, y = subWkdayDay_avg$x, type = "l", lty = 5, lwd=0.5, col = "blue")
+legend("top", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
+       cex=0.8,title="Data Legend", text.font=4, lty = 1:1)
+abline(lm(subWkdayDay_avg$x ~ subWkdayDay_avg$Time, subWkdayDay_avg), col="blue", lwd = 2.0)
+abline(lm(subWkendDay_avg$x ~ subWkendDay_avg$Time, subWkendDay_avg), col= "red", lwd = 2.0)
+legend("topright", legend=c("Weekday Line", "Weekend Line"),
+       col=c("blue", "red"), cex=0.8,title="Data Legend", text.font=4, lty = 1:1, lwd = 2.0:2.0)
+
+# Create row number column to avoid gap in graph data
+subWkdayNight_avg <- dplyr::mutate(subWkdayNight_avg, ID = row_number())
+subWkendNight_avg <- dplyr::mutate(subWkendNight_avg, ID = row_number())
+
+# Set DFs in descending order for graph
+# wkdayNight_avg <- wkdayNight_avg[ order(wkdayNight_avg$Time , decreasing = TRUE), ]
+# wkendNight_avg <- wkendNight_avg[ order(wkendNight_avg$Time , decreasing = TRUE), ]
+
+# Make weekday and weekend night graph
+WkEndNightPlot <- plot(x = subWkendNight_avg$ID, y = subWkendNight_avg$x, ylim = c(0, 25),
+                       type = "l", lty = 1, lwd= 0.5, col = "red")
+points(subWkdayNight_avg$ID, y = subWkdayNight_avg$x, type = "l", lty = 5, lwd=0.5, col = "blue")
+legend("topleft", legend=c("Weekday", "weekend"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+abline(lm(subWkdayNight_avg$x ~ subWkdayNight_avg$ID, subWkdayNight_avg), col="blue", lwd = 2.0)
+abline(lm(subWkendNight_avg$x ~ subWkendNight_avg$ID, subWkendNight_avg), col= "red", lwd = 2.0)
+legend("topright", legend=c("Weekday Line", "Weekend Line"),
+       col=c("blue", "red"), cex=0.6,title="Data Legend", text.font=4, lty = 1:1, lwd = 2.0:2.0)
 
 
-abline(lm(wkdayDay_avg$x ~ wkdayDay_avg$Time, wkdayDay_avg), col="blue", lwd = 2.0)
-abline(lm(wkendDay_avg$x ~ wkendDay_avg$Time, wkendDay_avg), col= "red", lwd = 2.0)
-legend("topright", legend=c("Weekday Line", "weekend Line"),col=c("blue", "red"), cex=0.8,title="Data Legend", text.font=4, lty = 1:1, lwd = 2.0:2.0)
 
-
-
-View(wkdayDay_avg)
-View(wkdayNight_avg)
-View(wkendDay_avg)
-View(wkendNight_avg)
