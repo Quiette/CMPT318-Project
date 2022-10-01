@@ -10,10 +10,10 @@ library("psych")
 #install.packages("modeest")
 library("modeest") 
 
-install.packages("ggplot2")
+#install.packages("ggplot2")
 library(ggplot2)
 
-install.packages("dplyr")
+#install.packages("dplyr")
 library(dplyr)
 
 # Set working directory to file location
@@ -90,35 +90,89 @@ subWkendNight_avg <- wkendNight_avg[wkendNight_avg$Group.1 >= subNightStart
 subWkdayNight_avg <- wkdayNight_avg[wkdayNight_avg$Group.1 >= subNightStart 
                                     | wkdayNight_avg$Group.1 <= subNightEnd, ]
 
-# Make weekday and weekend day graph
-WkEndDayPlot <- plot(x = subWkendDay_avg$Time, y = subWkendDay_avg$x, type = "l",
-                     lty = 1, lwd=0.5, col = "red")
-points(subWkdayDay_avg$Time, y = subWkdayDay_avg$x, type = "l", lty = 5, lwd=0.5, col = "blue")
-legend("top", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
-       cex=0.8,title="Data Legend", text.font=4, lty = 1:1)
-abline(lm(subWkdayDay_avg$x ~ subWkdayDay_avg$Time, subWkdayDay_avg), col="blue", lwd = 2.0)
-abline(lm(subWkendDay_avg$x ~ subWkendDay_avg$Time, subWkendDay_avg), col= "red", lwd = 2.0)
-legend("topright", legend=c("Weekday Line", "Weekend Line"),
-       col=c("blue", "red"), cex=0.8,title="Data Legend", text.font=4, lty = 1:1, lwd = 2.0:2.0)
+# Create row number column to avoid gap in graph data
+subWkdayNight_avg <- dplyr::mutate(subWkdayNight_avg, ID = row_number())
+subWkendNight_avg <- dplyr::mutate(subWkendNight_avg, ID = row_number())
+subWkdayDay_avg <- dplyr::mutate(subWkdayDay_avg, ID = row_number())
+subWkendDay_avg <- dplyr::mutate(subWkendDay_avg, ID = row_number())
+
+# Split and organize night DFs in order
+df1 <- subWkdayNight_avg[subWkdayNight_avg$ID >= 1 & subWkdayNight_avg$ID <= 121,]
+df1 <- df1[order(df1$Group.1 , decreasing = FALSE), ]
+df2 <- subWkdayNight_avg[subWkdayNight_avg$ID >= 122 & subWkdayNight_avg$ID <= 301,]
+df2 <- df2[order(df2$Group.1 , decreasing = FALSE), ]
+subWkdayNight_avg <- rbind(df2, df1)
+
+df1 <- subWkendNight_avg[subWkendNight_avg$ID >= 1 & subWkendNight_avg$ID <= 121,]
+df1 <- df1[order(df1$Group.1 , decreasing = FALSE), ]
+df2 <- subWkendNight_avg[subWkendNight_avg$ID >= 122 & subWkendNight_avg$ID <= 301,]
+df2 <- df2[order(df2$Group.1 , decreasing = FALSE), ]
+subWkendNight_avg <- rbind(df2, df1)
 
 # Create row number column to avoid gap in graph data
 subWkdayNight_avg <- dplyr::mutate(subWkdayNight_avg, ID = row_number())
 subWkendNight_avg <- dplyr::mutate(subWkendNight_avg, ID = row_number())
+subWkdayDay_avg <- dplyr::mutate(subWkdayDay_avg, ID = row_number())
+subWkendDay_avg <- dplyr::mutate(subWkendDay_avg, ID = row_number())
 
-# Set DFs in descending order for graph
-# wkdayNight_avg <- wkdayNight_avg[ order(wkdayNight_avg$Time , decreasing = TRUE), ]
-# wkendNight_avg <- wkendNight_avg[ order(wkendNight_avg$Time , decreasing = TRUE), ]
+# Make weekday and weekend day graph
+WkEndDayPlot <- plot(x = subWkendDay_avg$ID, y = subWkendDay_avg$x, 
+                     main = "Global Intensity Trend (Day)", xlab = "Time", 
+                     ylab = "Average Global Intensity (amps)", xaxt='n',
+                     ylim = c(0, 25), type = "l", lty = 1, lwd= 0.5, col = "red")
+
+# Add proper labels to x-axis
+axis(1, at = seq(round(min(1)),round(max(241)), by = 60), 
+     labels = c("10:00", "11:00", "12:00", "13:00", "14:00"))
+seq(round(min(1)),round(max(301)), by = 60)
+
+points(subWkdayDay_avg$ID, y = subWkdayDay_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
+legend("topleft", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+# Add legend
+legend("topright", legend=c("Linear Reg Weekday Line", "Linear Reg Weekend Line",
+                            "Poly Reg Weekday Line", "Poly Reg Weekend Line"),
+       col=c("blue", "red", col=4, col="maroon"), cex=0.6,title="Regression Legend", 
+       text.font=4, lty = c(1,1,2,2), lwd = 2.0:2.0)
+
+abline(lm(subWkdayDay_avg$x ~ subWkdayDay_avg$ID, subWkdayDay_avg), col="blue", lwd = 2.0)
+abline(lm(subWkendDay_avg$x ~ subWkendDay_avg$ID, subWkendDay_avg), col= "red", lwd = 2.0)
+
+# Add polynomial line for day
+fit_polyWkdayDay <- lm(subWkdayDay_avg$x ~ poly(subWkdayDay_avg$ID, 3,
+                                           raw=TRUE), subWkdayDay_avg)
+lines(fit_polyWkdayDay$fitted.values, col=4, lty = 2, lwd=2)
+fit_polyWkendDay <- lm(subWkendDay_avg$x ~ poly(subWkendDay_avg$ID, 7,
+                                           raw=TRUE), subWkendDay_avg)
+lines(fit_polyWkendDay$fitted.values, col="maroon", lty = 2, lwd=2)
 
 # Make weekday and weekend night graph
-WkEndNightPlot <- plot(x = subWkendNight_avg$ID, y = subWkendNight_avg$x, ylim = c(0, 25),
-                       type = "l", lty = 1, lwd= 0.5, col = "red")
-points(subWkdayNight_avg$ID, y = subWkdayNight_avg$x, type = "l", lty = 5, lwd=0.5, col = "blue")
-legend("topleft", legend=c("Weekday", "weekend"),col=c("blue", "red"), 
+WkEndNightPlot <- plot(x = subWkendNight_avg$ID, y = subWkendNight_avg$x,
+                       main = "Global Intensity Trend (Night)", xlab = "Time", 
+                       ylab = "Average Global Intensity (amps)", xaxt='n',
+                       ylim = c(0, 25), type = "l", lty = 1, lwd= 0.5, col = "red")
+
+# Add proper labels to x-axis
+axis(1, at = seq(round(min(1)),round(max(301)), by = 60), 
+     labels = c("21:00", "22:00", "23:00", "00:00", "1:00", "2:00"))
+seq(round(min(1)),round(max(301)), by = 60)
+
+points(subWkdayNight_avg$ID, y = subWkdayNight_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
+legend("topleft", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 abline(lm(subWkdayNight_avg$x ~ subWkdayNight_avg$ID, subWkdayNight_avg), col="blue", lwd = 2.0)
 abline(lm(subWkendNight_avg$x ~ subWkendNight_avg$ID, subWkendNight_avg), col= "red", lwd = 2.0)
-legend("topright", legend=c("Weekday Line", "Weekend Line"),
-       col=c("blue", "red"), cex=0.6,title="Data Legend", text.font=4, lty = 1:1, lwd = 2.0:2.0)
 
+# Add polynomial line for night
+fit_poly1 <- lm(subWkdayNight_avg$x ~ poly(subWkdayNight_avg$ID, 3,
+                                              raw=TRUE), subWkdayNight_avg)
+lines(fit_poly1$fitted.values, col=4, lty = 2, lwd=2)
+fit_poly2 <- lm(subWkendNight_avg$x ~ poly(subWkendNight_avg$ID, 3,
+                                           raw=TRUE), subWkendNight_avg)
+lines(fit_poly2$fitted.values, col="maroon", lty = 2, lwd=2)
 
+legend("topright", legend=c("Linear Reg Weekday Line", "Linear Reg Weekend Line",
+                            "Poly Reg Weekday Line", "Poly Reg Weekday Line"),
+       col=c("blue", "red", col=4, col="maroon"), cex=0.6,title="Regression Legend", 
+       text.font=4, lty = c(1,1,2,2), lwd = 2.0:2.0)
 
