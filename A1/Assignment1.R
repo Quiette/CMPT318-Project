@@ -14,7 +14,10 @@ library("Hmisc")
 library("corrplot")
 
 #install.packages("modeest")
-library("modeest") 
+library("modeest")
+
+#install.packages("dplyr")
+library(dplyr)
 
 # Set working directory to file location
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -111,22 +114,7 @@ subDayEnd = "14:00:00"
 subNightStart = "21:00:00"
 subNightEnd = "02:00:00"
 
-df <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
-
-df$Date <- as.POSIXct(df$Date, format= "%d/%m/%Y")
-start <- as.POSIXct("08/01/2007",format= "%d/%m/%Y")
-end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
-df <- df[df$Date >=  start & df$Date <= end,]
-class(df$Date)
-
-# Create weekday column, 1 if weekday, 0 if weekend
-# Sun = 1, Mon = 1, T = 3, W = 4, Th = 5 F = 6, Sat = 7
-weekdayCol <- wday(df$Date)
-weekdayCol[weekdayCol == 1 | weekdayCol == 7 ] <- 0
-weekdayCol[weekdayCol != 0] <- 1
-df$WeekdayBool <- weekdayCol
-
-PowerTimeDate <- df[,c(1,2,6,10)]
+PowerTimeDate <- table[,c(1,2,6,10)]
 
 # Create sub DFs for weekday days and weekday nights
 PowerTimeWkdayDay <- PowerTimeDate[(PowerTimeDate$Time >= dayTimeStart & 
