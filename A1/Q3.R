@@ -120,21 +120,22 @@ WkEndDayPlot <- plot(x = subWkendDay_avg$ID, y = subWkendDay_avg$x,
                      main = "Global Intensity Trend (Day)", xlab = "Time", 
                      ylab = "Average Global Intensity (amps)", xaxt='n',
                      ylim = c(0, 25), type = "l", lty = 1, lwd= 0.5, col = "red")
+points(subWkdayDay_avg$ID, y = subWkdayDay_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
 
 # Add proper labels to x-axis
 axis(1, at = seq(round(min(1)),round(max(241)), by = 60), 
      labels = c("10:00", "11:00", "12:00", "13:00", "14:00"))
 seq(round(min(1)),round(max(301)), by = 60)
 
-points(subWkdayDay_avg$ID, y = subWkdayDay_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
+# Create legends
 legend("topleft", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
-# Add legend
 legend("topright", legend=c("Linear Reg Weekday Line", "Linear Reg Weekend Line",
                             "Poly Reg Weekday Line", "Poly Reg Weekend Line"),
        col=c("blue", "red", col=4, col="maroon"), cex=0.6,title="Regression Legend", 
        text.font=4, lty = c(1,1,2,2), lwd = 2.0:2.0)
 
+# Create linear lines
 abline(lm(subWkdayDay_avg$x ~ subWkdayDay_avg$ID, subWkdayDay_avg), col="blue", lwd = 2.0)
 abline(lm(subWkendDay_avg$x ~ subWkendDay_avg$ID, subWkendDay_avg), col= "red", lwd = 2.0)
 
@@ -151,28 +152,30 @@ WkEndNightPlot <- plot(x = subWkendNight_avg$ID, y = subWkendNight_avg$x,
                        main = "Global Intensity Trend (Night)", xlab = "Time", 
                        ylab = "Average Global Intensity (amps)", xaxt='n',
                        ylim = c(0, 25), type = "l", lty = 1, lwd= 0.5, col = "red")
+points(subWkdayNight_avg$ID, y = subWkdayNight_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
 
 # Add proper labels to x-axis
 axis(1, at = seq(round(min(1)),round(max(301)), by = 60), 
      labels = c("21:00", "22:00", "23:00", "00:00", "1:00", "2:00"))
 seq(round(min(1)),round(max(301)), by = 60)
 
-points(subWkdayNight_avg$ID, y = subWkdayNight_avg$x, type = "l", lty = 1, lwd=0.5, col = "blue")
+# Create legends
+legend("topright", legend=c("Linear Reg Weekday Line", "Linear Reg Weekend Line",
+                            "Poly Reg Weekday Line", "Poly Reg Weekday Line"),
+       col=c("blue", "red", col=4, col="maroon"), cex=0.6,title="Regression Legend", 
+       text.font=4, lty = c(1,1,2,2), lwd = 2.0:2.0)
 legend("topleft", legend=c("Weekday", "Weekend"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+
+# Create linear lines
 abline(lm(subWkdayNight_avg$x ~ subWkdayNight_avg$ID, subWkdayNight_avg), col="blue", lwd = 2.0)
 abline(lm(subWkendNight_avg$x ~ subWkendNight_avg$ID, subWkendNight_avg), col= "red", lwd = 2.0)
 
-# Add polynomial line for night
+# Add polynomial lines for night
 fit_poly1 <- lm(subWkdayNight_avg$x ~ poly(subWkdayNight_avg$ID, 3,
                                               raw=TRUE), subWkdayNight_avg)
 lines(fit_poly1$fitted.values, col=4, lty = 2, lwd=2)
 fit_poly2 <- lm(subWkendNight_avg$x ~ poly(subWkendNight_avg$ID, 3,
                                            raw=TRUE), subWkendNight_avg)
 lines(fit_poly2$fitted.values, col="maroon", lty = 2, lwd=2)
-
-legend("topright", legend=c("Linear Reg Weekday Line", "Linear Reg Weekend Line",
-                            "Poly Reg Weekday Line", "Poly Reg Weekday Line"),
-       col=c("blue", "red", col=4, col="maroon"), cex=0.6,title="Regression Legend", 
-       text.font=4, lty = c(1,1,2,2), lwd = 2.0:2.0)
 
