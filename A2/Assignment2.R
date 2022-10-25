@@ -24,7 +24,7 @@ weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
 #turn all the datapoints into smoothened datapoints using ma() (moving average)
 weeklist <- list()
 for (i in weeks){
- q <- ma(i,7,centre = TRUE)
+ q <- list(ma(i,7,centre = TRUE))
  weeklist <- append(weeklist, q)
 }
 
