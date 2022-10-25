@@ -1,7 +1,7 @@
 library("rstudioapi")
 require(dplyr)
 require(tidyr)
-
+library(forecast)
 
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -17,5 +17,14 @@ n <- 10080
 nr <- nrow(table)
 weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
 
-#this is how u index a minute in the week u want
-print(weeks$`1`[1])
+#moving average for a week
+#v <- ma(weeks$`1`,7,centre = TRUE)
+#print(v)
+
+#turn all the datapoints into smoothened datapoints using ma() (moving average)
+weeklist <- list()
+for (i in weeks){
+ q <- ma(i,7,centre = TRUE)
+ weeklist <- append(weeklist, q)
+}
+
