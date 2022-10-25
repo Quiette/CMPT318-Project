@@ -7,14 +7,11 @@ library("lubridate")
 #install.packages("psych")
 library("psych") 
 
-#install.packages("Hmisc")
-library("Hmisc")
-
-#install.packages("corrplot")
-library("corrplot")
-
 #install.packages("modeest")
-library("modeest")
+library("modeest") 
+
+#install.packages("ggplot2")
+library(ggplot2)
 
 #install.packages("dplyr")
 library(dplyr)
@@ -23,116 +20,48 @@ library(dplyr)
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
 
-# Create table information
-table <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
-table$Date <- as.POSIXct(table$Date, format= "%d/%m/%Y")
+dayTimeStart = "09:00:00"
+nightTimeStart = "17:00:00"
 
-# EXTRACT 2ND WEEKS OF INFO
-start <- as.POSIXct("08/01/2007",format= "%d/%m/%Y")
-end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
-table <- table[table$Date >=  start & table$Date <= end,]
-
-dayTimeStart = "09:00:00" # is == nightTimeEnd, day = [9am,5pm]
-nightTimeStart = "17:00:00" # is == dayTimeEnd, night = (5pm,9am)
-
-#############################################
-# 1 - done by Nicole
-# Create weekday column, 1 if weekday, 0 if weekend
-# Sun = 1, Mon = 1, T = 3, W = 4, Th = 5 F = 6, Sat = 7
-weekdayCol <- wday(table$Date)
-weekdayCol[weekdayCol == 1 | weekdayCol == 7 ] <- 0
-weekdayCol[weekdayCol != 0] <- 1
-table$WeekdayBool <- weekdayCol
-
-# Means, median, mode and SD results
-pwVoltageData <- table[,c(3,4,5)]
-sapply(pwVoltageData, function(x) mean(x, na.rm=TRUE))
-sapply(pwVoltageData, function(x) geometric.mean(x, na.rm=TRUE))
-sapply(pwVoltageData, function(x) median(x, na.rm=TRUE))
-sapply(pwVoltageData, mfv)
-sapply(pwVoltageData, function(x) sd(x, na.rm=TRUE))
-
-###
-PowerTimeDate <- table[,c(2,3,4,10)]
-
-# Create subDFs for day and night
-PowerTimeNight <- PowerTimeDate[PowerTimeDate$Time < dayTimeStart | PowerTimeDate$Time > nightTimeStart,]
-PowerTimeDay <- PowerTimeDate[PowerTimeDate$Time >= dayTimeStart & PowerTimeDate$Time <= nightTimeStart,]
-
-# Create subDFs for weekday and weekend
-WeekSplitNight <- split (PowerTimeNight, PowerTimeNight$WeekdayBool)
-WeekSplitDay <- split (PowerTimeDay, PowerTimeDay$WeekdayBool)
-
-# Calc min/max for weekend/day for night
-i = 0
-for(nTable in WeekSplitNight){
-  if (i == 0){
-    cat("WEEKEND\n")
-    i=1
-  }
-  else{
-    cat("WEEKDAY\n")
-    i=0
-  }
-  nMin <- sapply(nTable[,c(2,3)], function(x) min(x, na.rm=TRUE))
-  nMax <- sapply(nTable[,c(2,3)], function(x) max(x, na.rm=TRUE))
-  cat("Min for (Active, Reactive) during Night", nMin)
-  cat("\nMax for (Active, Reactive) during Night", nMax)
-  cat("\n\n") # 1st value is weekdayBool = 0, so weekend
-}
-
-# Calc min/max for weekend/day for night
-for(dTable in WeekSplitDay){
-  if (i == 0){
-    cat("WEEKEND\n")
-    i=1
-  }
-  else{
-    cat("WEEKDAY\n")
-    i=0
-  }
-  dMin <- sapply(dTable[,c(2,3)], function(x) min(x, na.rm=TRUE))
-  dMax <- sapply(dTable[,c(2,3)], function(x) max(x, na.rm=TRUE))
-  cat("Min for (Active, Reactive) during Day", dMin)
-  cat("\nMax for (Active, Reactive) during Day", dMax)
-  cat("\n\n") # 1st value is weekdayBool = 0, so weekend
-}
-
-
-#############################################
-# 2 - done by Kirby
-
-table2 <- subset(table, select = -c(Date,Time,WeekdayBool))
-res <- corr.test(table2, y = NULL, use = "complete",method="pearson",adjust="holm", alpha=.01)
-corrplot(res$r, type="upper", order="hclust", p.mat = res$P, sig.level = 0.01, addCoef.col = 'black', is.corr = FALSE, insig = "label_sig")
-
-
-#############################################
-# 3 - done by Gavin
 subDayStart = "10:00:00"
 subDayEnd = "14:00:00"
 subNightStart = "21:00:00"
 subNightEnd = "02:00:00"
 
-PowerTimeDate <- table[,c(1,2,6,10)]
+df <- read.table("Group_Assignment_1_Dataset.txt", header = TRUE, sep = ",")
+
+df$Date <- as.POSIXct(df$Date, format= "%d/%m/%Y")
+start <- as.POSIXct("08/01/2007",format= "%d/%m/%Y")
+end <- as.POSIXct("14/01/2007",format= "%d/%m/%Y")
+df <- df[df$Date >=  start & df$Date <= end,]
+class(df$Date)
+
+# Create weekday column, 1 if weekday, 0 if weekend
+# Sun = 1, Mon = 1, T = 3, W = 4, Th = 5 F = 6, Sat = 7
+weekdayCol <- wday(df$Date)
+weekdayCol[weekdayCol == 1 | weekdayCol == 7 ] <- 0
+weekdayCol[weekdayCol != 0] <- 1
+df$WeekdayBool <- weekdayCol
+
+PowerTimeDate <- df[,c(1,2,6,10)]
 
 # Create sub DFs for weekday days and weekday nights
 PowerTimeWkdayDay <- PowerTimeDate[(PowerTimeDate$Time >= dayTimeStart & 
-                                      PowerTimeDate$Time <= nightTimeStart) 
-                                   & PowerTimeDate$WeekdayBool == 1, ]
+                                PowerTimeDate$Time <= nightTimeStart) 
+                                & PowerTimeDate$WeekdayBool == 1, ]
 
 PowerTimeWkdayNight <- PowerTimeDate[(PowerTimeDate$Time < dayTimeStart | 
-                                        PowerTimeDate$Time > nightTimeStart) & 
-                                       PowerTimeDate$WeekdayBool == 1, ]
+                                    PowerTimeDate$Time > nightTimeStart) & 
+                                    PowerTimeDate$WeekdayBool == 1, ]
 
 # Create sub DFs for weekend day and weekend night
 PowerTimeWkendDay <- PowerTimeDate[(PowerTimeDate$Time >= dayTimeStart & 
-                                      PowerTimeDate$Time <= nightTimeStart) 
+                                     PowerTimeDate$Time <= nightTimeStart) 
                                    & PowerTimeDate$WeekdayBool == 0, ]
 
 PowerTimeWkendNight <- PowerTimeDate[(PowerTimeDate$Time < dayTimeStart |
                                         PowerTimeDate$Time > nightTimeStart) & 
-                                       PowerTimeDate$WeekdayBool == 0, ]
+                                        PowerTimeDate$WeekdayBool == 0, ]
 
 # Time series for day weekdays & night weekdays
 wkdayDay_avg <- aggregate(PowerTimeWkdayDay$Global_intensity, 
@@ -144,7 +73,7 @@ wkdayNight_avg <- aggregate(PowerTimeWkdayNight$Global_intensity,
 wkendDay_avg <- aggregate(PowerTimeWkendDay$Global_intensity, 
                           list(PowerTimeWkendDay$Time), mean)
 wkendNight_avg <- aggregate(PowerTimeWkendNight$Global_intensity, 
-                            list(PowerTimeWkendNight$Time), mean)
+          list(PowerTimeWkendNight$Time), mean)
 
 wkendNight_avg$Time = as.POSIXct(wkendNight_avg$Group.1, format = "%H:%M:%S")
 wkendDay_avg$Time = as.POSIXct(wkendDay_avg$Group.1, format = "%H:%M:%S")
@@ -153,7 +82,7 @@ wkdayDay_avg$Time = as.POSIXct(wkdayDay_avg$Group.1, format = "%H:%M:%S")
 
 # Extract sub-time intervals for graph (10am - 2pm day), (9pm - 2am for night)
 subWkdayDay_avg <- wkdayDay_avg[wkdayDay_avg$Group.1 >= subDayStart 
-                                & wkdayDay_avg$Group.1 <= subDayEnd, ]
+                                  & wkdayDay_avg$Group.1 <= subDayEnd, ]
 subWkendDay_avg <- wkendDay_avg[wkendDay_avg$Group.1 >= subDayStart
                                 & wkendDay_avg$Group.1 <= subDayEnd, ]
 subWkendNight_avg <- wkendNight_avg[wkendNight_avg$Group.1 >= subNightStart 
@@ -212,10 +141,10 @@ abline(lm(subWkendDay_avg$x ~ subWkendDay_avg$ID, subWkendDay_avg), col= "red", 
 
 # Add polynomial line for day
 fit_polyWkdayDay <- lm(subWkdayDay_avg$x ~ poly(subWkdayDay_avg$ID, 3,
-                                                raw=TRUE), subWkdayDay_avg)
+                                           raw=TRUE), subWkdayDay_avg)
 lines(fit_polyWkdayDay$fitted.values, col=4, lty = 2, lwd=2)
 fit_polyWkendDay <- lm(subWkendDay_avg$x ~ poly(subWkendDay_avg$ID, 7,
-                                                raw=TRUE), subWkendDay_avg)
+                                           raw=TRUE), subWkendDay_avg)
 lines(fit_polyWkendDay$fitted.values, col="maroon", lty = 2, lwd=2)
 
 # Make weekday and weekend night graph
@@ -244,8 +173,9 @@ abline(lm(subWkendNight_avg$x ~ subWkendNight_avg$ID, subWkendNight_avg), col= "
 
 # Add polynomial lines for night
 fit_poly1 <- lm(subWkdayNight_avg$x ~ poly(subWkdayNight_avg$ID, 3,
-                                           raw=TRUE), subWkdayNight_avg)
+                                              raw=TRUE), subWkdayNight_avg)
 lines(fit_poly1$fitted.values, col=4, lty = 2, lwd=2)
 fit_poly2 <- lm(subWkendNight_avg$x ~ poly(subWkendNight_avg$ID, 3,
                                            raw=TRUE), subWkendNight_avg)
 lines(fit_poly2$fitted.values, col="maroon", lty = 2, lwd=2)
+
