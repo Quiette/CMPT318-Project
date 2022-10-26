@@ -2,6 +2,7 @@ library("rstudioapi")
 require(dplyr)
 require(tidyr)
 library(forecast)
+library(zoo)
 
 
 #set working directory
@@ -32,6 +33,17 @@ for (i in weeks){
 smoothenedWeeks[53] <- NULL
 sum <- 0
 averageSmoothenedWeek <- list()
+
+# each row is a week, each column is minute i
+Testdf <- as.data.frame(do.call("rbind", smoothenedWeeks))
+ncol(Testdf)
+nrow(Testdf)
+
+# average by each col to get avg per min
+TestResults <- colMeans(Testdf, na.rm = TRUE)
+TestResults[10]
+
+mean(Testdf[,10], na.rm = TRUE)
 #calculating average smoothened week
 for (i in 4:10077){
   temp <- list()
