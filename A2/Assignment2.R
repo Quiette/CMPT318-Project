@@ -32,8 +32,6 @@ for (i in weeks){
 #this week is incomplete so we can ignore it
 smoothenedWeeks[53] <- NULL
 sum <- 0
-averageSmoothenedWeek <- list()
-
 # each row is a week, each column is minute i
 Testdf <- as.data.frame(do.call("rbind", smoothenedWeeks))
 ncol(Testdf)
@@ -43,19 +41,9 @@ nrow(Testdf)
 TestResults <- colMeans(Testdf, na.rm = TRUE)
 TestResults[10]
 
+
+
 mean(Testdf[,10], na.rm = TRUE)
-#calculating average smoothened week
-for (i in 4:10077){
-  temp <- list()
-  for (j in 1:52){
-    c <- smoothenedWeeks[j]
-    d <- as.data.frame(c)
-    e <- d[,1]
-    temp <- append(temp, e[i])
-  }
-  sum <- sum(unlist(temp), na.rm = TRUE)
-  sum <- sum / 52
-  #print(sum)
-  averageSmoothenedWeek <- append(averageSmoothenedWeek, sum)
-  sum <- 0
-}
+print(Testdf[2,])
+#mse1 <- mean(Testdf[,1]-TestResults))
+
