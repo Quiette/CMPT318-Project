@@ -36,14 +36,26 @@ averageSmoothenedWeek <- list()
 
 # each row is a week, each column is minute i
 Testdf <- as.data.frame(do.call("rbind", smoothenedWeeks))
-ncol(Testdf)
-nrow(Testdf)
 
-# average by each col to get avg per min
-TestResults <- colMeans(Testdf, na.rm = TRUE)
-TestResults[10]
 
-mean(Testdf[,10], na.rm = TRUE)
+RowMinColWeek <- do.call(rbind.data.frame, Testdf)
+AvgSmoothedWeek <- rowMeans(RowMinColWeek, na.rm = TRUE)
+
+typeof(RowMinColWeek[1,])
+RowMinColWeek[10,]
+mean(unlist(RowMinColWeek[1,]), na.rm = TRUE)
+
+length(unlist(RowMinColWeek[,1]))
+
+# unlist(RowMinColWeek[,i] is all 10074 datapoint for week i
+# unlist(RowMinColWeek[j, ] is all weekly datapoint for minute j
+for(i in 1:52){
+  MSE <- mean((unlist(RowMinColWeek[,i]) - AvgSmoothedWeek)^2, na.rm = TRUE)
+  cat("MSE for Week ", i, " - ")
+  cat(MSE)
+  cat("\n")
+}
+
 #calculating average smoothened week
 for (i in 4:10077){
   temp <- list()
