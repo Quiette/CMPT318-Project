@@ -3,6 +3,7 @@ require(dplyr)
 require(tidyr)
 library(forecast)
 
+
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
@@ -22,9 +23,27 @@ weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
 #print(v)
 
 #turn all the datapoints into smoothened datapoints using ma() (moving average)
-weeklist <- list()
+smoothenedWeeks <- list()
 for (i in weeks){
- q <- list(ma(i,7,centre = TRUE))
- weeklist <- append(weeklist, q)
+ q <- list(rollmean(i,7,centre = TRUE))
+ smoothenedWeeks <- append(smoothenedWeeks, q)
 }
-
+#this week is incomplete so we can ignore it
+smoothenedWeeks[53] <- NULL
+sum <- 0
+averageSmoothenedWeek <- list()
+#calculating average smoothened week
+for (i in 4:10077){
+  temp <- list()
+  for (j in 1:52){
+    c <- smoothenedWeeks[j]
+    d <- as.data.frame(c)
+    e <- d[,1]
+    temp <- append(temp, e[i])
+  }
+  sum <- sum(unlist(temp), na.rm = TRUE)
+  sum <- sum / 52
+  #print(sum)
+  averageSmoothenedWeek <- append(averageSmoothenedWeek, sum)
+  sum <- 0
+}
