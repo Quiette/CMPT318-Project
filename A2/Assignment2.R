@@ -44,6 +44,7 @@ RowMinColWeek[10,]
 mean(unlist(RowMinColWeek[1,]), na.rm = TRUE)
 
 length(unlist(RowMinColWeek[,1]))
+MSES <- list()
 
 # unlist(RowMinColWeek[,i] is all 10074 datapoint for week i
 # unlist(RowMinColWeek[j, ] is all weekly datapoint for minute j
@@ -52,9 +53,18 @@ for(i in 1:52){
   cat("MSE for Week ", i, " - ")
   cat(MSE)
   cat("\n")
+  MSES <- append(MSES,MSE)
 }
+MSEtable <- do.call(rbind.data.frame, Map('c', c(1:52), MSES))
+colnames(MSEtable)[1] <- "Week"
+colnames(MSEtable)[2] <- "MSE"
+print(smoothenedWeeks[1])
 
+plot(AvgSmoothedWeek,type="l",xlab="Time (minutes)", ylab = "Global_Intensity",main="Most anomalous week vs average smoothened week",col="blue",ylim=c(0,40))
+lines(unlist(smoothenedWeeks[52]),type="l",col="red")
+legend(500,35,title="Legend",text.font=3,legend=c("Average smoothened week","week 52"),col=c("blue","red"),lty=1:1, cex=0.8)
 #calculating average smoothened week
+view(dff)
 for (i in 4:10077){
   temp <- list()
   for (j in 1:52){
