@@ -71,19 +71,5 @@ lines(unlist(smoothenedWeeks[52]),type="l",col="red")
 legend(500,35,title="Legend",text.font=3,legend=c("Average smoothened week","week 52"),col=c("blue","red"),lty=1:1, cex=0.8)
 axis(1, at = seq(round(min(1)),round(max(10080)), by = 1440), labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"))
 seq(round(min(1)),round(max(301)), by = 60)
-#calculating average smoothened week
-view(dff)
-for (i in 4:10077){
-  temp <- list()
-  for (j in 1:52){
-    c <- smoothenedWeeks[j]
-    d <- as.data.frame(c)
-    e <- d[,1]
-    temp <- append(temp, e[i])
-  }
-  sum <- sum(unlist(temp), na.rm = TRUE)
-  sum <- sum / 52
-  #print(sum)
-  averageSmoothenedWeek <- append(averageSmoothenedWeek, sum)
-  sum <- 0
-}
+
+
