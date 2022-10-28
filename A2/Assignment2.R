@@ -60,9 +60,17 @@ colnames(MSEtable)[1] <- "Week"
 colnames(MSEtable)[2] <- "MSE"
 print(smoothenedWeeks[1])
 
-plot(AvgSmoothedWeek,type="l",xlab="Time (minutes)", ylab = "Global_Intensity",main="Most anomalous week vs average smoothened week",col="blue",ylim=c(0,40))
+plot(AvgSmoothedWeek,type="l",lwd=2,xaxt='n',xlab="Day of the week", ylab = "Global_Intensity (amps)",main="Least anomalous week vs average smoothened week",col="blue",ylim=c(0,20))
+lines(unlist(smoothenedWeeks[30]),type="l",col="red")
+legend(500,20,title="Legend",text.font=3,legend=c("Average smoothened week","week 30"),col=c("blue","red"),lty=1:1, cex=0.8)
+axis(1, at = seq(round(min(1)),round(max(10080)), by = 1440), labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"))
+
+
+plot(AvgSmoothedWeek,type="l",lwd=2,xaxt='n',xlab="Day of the week", ylab = "Global_Intensity (amps)",main="Most anomalous week vs average smoothened week",col="blue",ylim=c(0,40))
 lines(unlist(smoothenedWeeks[52]),type="l",col="red")
 legend(500,35,title="Legend",text.font=3,legend=c("Average smoothened week","week 52"),col=c("blue","red"),lty=1:1, cex=0.8)
+axis(1, at = seq(round(min(1)),round(max(10080)), by = 1440), labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"))
+seq(round(min(1)),round(max(301)), by = 60)
 #calculating average smoothened week
 view(dff)
 for (i in 4:10077){
