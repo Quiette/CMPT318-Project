@@ -3,6 +3,10 @@ require(dplyr)
 require(tidyr)
 library(forecast)
 library(zoo)
+library(quantmod)
+library(plotly)
+install.packages("depmixS4")
+library(depmixS4)
 
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -25,9 +29,10 @@ identical(Global_IntensityTwo,Global_Intensity)
 n <- 10080
 nr <- nrow(table)
 weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
-
+scaledWeeks <- split(scaledTable, rep(1:ceiling(nr/n), each=n, length.out=nr))
 # remove incomplete week of week 53
 weeks <- weeks[- 53]
+scaledWeeks <- scaledWeeks [- 53]
 
 # Possible starts: 1300, 1700
 trendStart = 1700
@@ -48,6 +53,18 @@ trendStart = 1700
 #  }
 #}
 
+HMMTrainTest <- list()
+for (week in 1:52){
+  weekData <- scaledWeeks[[week]]
+  trend <-weekData[trendStart:(trendStart + 180),]
+  trend <- trend[ -c(1,2) ]
+  trend$weekID = week
+  typeof(trend)
+  HMMTrainTest <- append(HMMTrainTest, list(trend))
+}
+
+test <- do.call(rbind, HMMTrainTest)
+
 # Add data into training dataframe/set
 HMMTrain <- list()
 for (week in as.character(1:52)){
@@ -57,9 +74,20 @@ for (week in as.character(1:52)){
   HMMTrain <- append(HMMTrain, list(trend))
 }
 
+
 # Row = week of data, column = number
-HMMTrainDF <- do.call(rbind, HMMTrain)  
-typeof(HMMTrainDF)
+HMMTrainDF <- as.data.frame(do.call(rbind, HMMTrain))
+typeof(df)
+typeof(as.data.frame(HMMTrain))
+
+
+set.seed(1)
+testWithoutWeekID = test[ -c(8)]
+model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID[1:52, ], nstates = 2, ntimes = 52)
+fitModel <- fit(model)
+BIC(fitModel)
+logLik(fitModel)
+str(test)
 
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
