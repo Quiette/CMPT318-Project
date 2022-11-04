@@ -3,6 +3,7 @@ require(dplyr)
 require(tidyr)
 library(forecast)
 library(zoo)
+library("depmixS4")
 
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -58,8 +59,7 @@ for (week in as.character(1:52)){
 }
 
 # Row = week of data, column = number
-HMMTrainDF <- do.call(rbind, HMMTrain)  
-typeof(HMMTrainDF)
+
 
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
