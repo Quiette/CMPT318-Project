@@ -62,4 +62,4 @@ HMMTrainDF <- do.call(rbind, HMMTrain)
 typeof(HMMTrainDF)
 
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
-
+# Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
