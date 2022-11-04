@@ -83,7 +83,8 @@ typeof(as.data.frame(HMMTrain))
 
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
-model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID[1:52, ], nstates = 2, ntimes = 52)
+times <- rep(181, 52)
+model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 5, ntimes = times)
 fitModel <- fit(model)
 BIC(fitModel)
 logLik(fitModel)
