@@ -7,7 +7,7 @@ library(quantmod)
 library(plotly)
 install.packages("depmixS4")
 library(depmixS4)
-
+library(HMM)
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
@@ -80,15 +80,39 @@ HMMTrainDF <- as.data.frame(do.call(rbind, HMMTrain))
 typeof(df)
 typeof(as.data.frame(HMMTrain))
 
-
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
 times <- rep(181, 52)
-model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 5, ntimes = times)
-fitModel <- fit(model)
-BIC(fitModel)
-logLik(fitModel)
-str(test)
+model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 3, ntimes = times)
+model2 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 7, ntimes = times)
+model3 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 8, ntimes = times)
+model4 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 9, ntimes = times)
+model5 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 10, ntimes = times)
 
+fitModel <- fit(model)
+fitModel2 <- fit(model2)
+fitModel3 <- fit(model3)
+fitModel4 <- fit(model4)
+fitModel5 <- fit(model5)
+
+bic <- BIC(fitModel)
+bic2 <- BIC(fitModel2)
+bic3 <- BIC(fitModel3)
+bic4 <- BIC(fitModel4)
+bic5 <- BIC(fitModel5)
+
+l <- logLikHmm(fitModel)
+l2 <- logLik(fitModel2)
+l3 <- logLik(fitModel3)
+l4 <- logLik(fitModel4)
+l5 <- logLik(fitModel5)
+
+str(test)
+bic <- c(bic,bic2,bic3,bic4,bic5)
+ll <- c(l,l2,l3,l4,l5)
+
+df <- data.frame(bic,ll)
+
+print (df)
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
