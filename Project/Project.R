@@ -52,7 +52,7 @@ biplot + theme_minimal() + xlim(-2, 0.5)
 
 
 # Take only values which are important to PC1 and PC2. 
-scaledTable <- scaledTable[,c(1, 2, 5, 6, 8, 9)]
+postPCATable <- scaledTable[,c(1, 2, 6, 8, 9)]
 
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
