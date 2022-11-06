@@ -5,7 +5,6 @@ library(forecast)
 library(zoo)
 library(quantmod)
 library(plotly)
-install.packages("depmixS4")
 library(depmixS4)
 library(HMM)
 #set working directory
@@ -101,7 +100,7 @@ bic3 <- BIC(fitModel3)
 bic4 <- BIC(fitModel4)
 bic5 <- BIC(fitModel5)
 
-l <- logLikHmm(fitModel)
+l <- logLik(fitModel)
 l2 <- logLik(fitModel2)
 l3 <- logLik(fitModel3)
 l4 <- logLik(fitModel4)
@@ -112,7 +111,19 @@ bic <- c(bic,bic2,bic3,bic4,bic5)
 ll <- c(l,l2,l3,l4,l5)
 
 df <- data.frame(bic,ll)
+#make log values negative (change later)
+df$ll <- df$ll*(-1)
 
 print (df)
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
+
+###############################################################################
+GraphPlot <- plot(x = c(3:7), y = df$bic, 
+                     main = "BIC/LogLike Graph", xlab = "NStates", 
+                     ylab = "BIC/LogLik Scoring",
+                     ylim = c(-5000, -300000), type = "l", lty = 1, 
+                     lwd= 0.5, col = "red")
+points(x = c(3:7), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
