@@ -82,35 +82,22 @@ typeof(as.data.frame(HMMTrain))
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
 times <- rep(181, 52)
-model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 3, ntimes = times)
-model2 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 7, ntimes = times)
-model3 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 8, ntimes = times)
-model4 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 9, ntimes = times)
-model5 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 10, ntimes = times)
 
-fitModel <- fit(model)
-fitModel2 <- fit(model2)
-fitModel3 <- fit(model3)
-fitModel4 <- fit(model4)
-fitModel5 <- fit(model5)
+bicList = list()
+llList = list()
+for (num in 3:16){
+  model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = num, ntimes = times)
+  fitModel <- fit(model)
+  
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+}
 
-bic <- BIC(fitModel)
-bic2 <- BIC(fitModel2)
-bic3 <- BIC(fitModel3)
-bic4 <- BIC(fitModel4)
-bic5 <- BIC(fitModel5)
-
-l <- logLik(fitModel)
-l2 <- logLik(fitModel2)
-l3 <- logLik(fitModel3)
-l4 <- logLik(fitModel4)
-l5 <- logLik(fitModel5)
-
-str(test)
-bic <- c(bic,bic2,bic3,bic4,bic5)
-ll <- c(l,l2,l3,l4,l5)
-
-df <- data.frame(bic,ll)
+df <- data.frame(unlist(bicList),unlist(llList))
+names(df) = c("BIC","ll")
 #make log values negative (change later)
 df$ll <- df$ll*(-1)
 
@@ -124,6 +111,6 @@ GraphPlot <- plot(x = c(3:7), y = df$bic,
                      ylab = "BIC/LogLik Scoring",
                      ylim = c(-5000, -300000), type = "l", lty = 1, 
                      lwd= 0.5, col = "red")
-points(x = c(3:7), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
