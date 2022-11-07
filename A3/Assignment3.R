@@ -5,7 +5,7 @@ library(forecast)
 library(zoo)
 library(quantmod)
 library(plotly)
-install.packages("depmixS4")
+#install.packages("depmixS4")
 library(depmixS4)
 
 #set working directory
@@ -16,47 +16,53 @@ getwd()
 table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
 
 # scale all numeric columns
-scaledTable <- table %>% mutate(across(where(is.numeric), scale))
+#scaledTable <- table %>% mutate(across(where(is.numeric), scale))
 
-scaledTableTwo <- table %>% mutate_if(is.numeric, scale)
-#isolate global intensity
-Global_Intensity <- scaledTable$Global_intensity
-Global_IntensityTwo <- scaledTableTwo$Global_intensity
+scaledTable <- table 
+for(i in 1:ncol(scaledTable)){
+  cat(i, "\n")
+  if (is.numeric(scaledTable[,i])){
+    scaledTable[,i] <- scale(scaledTable[,i])
+  }
+}
 
-identical(Global_IntensityTwo,Global_Intensity)
+
+identical(table,scaledTable)
 
 # Split data into weeks. Each row index = 1 minute
 n <- 10080
 nr <- nrow(table)
-weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
+weeks <- split(scaledTable$Voltage, rep(1:ceiling(nr/n), each=n, length.out=nr))
 scaledWeeks <- split(scaledTable, rep(1:ceiling(nr/n), each=n, length.out=nr))
+
+unscaledWeeks <- split(table, rep(1:ceiling(nr/n), each=n, length.out=nr))
 # remove incomplete week of week 53
 weeks <- weeks[- 53]
 scaledWeeks <- scaledWeeks [- 53]
 
-# Possible starts: 1300, 1700
-trendStart = 1700
+trendStart = 5501 # Start @ 19:40 on Thursdays
+numPoints = 200 # End @ 23:00 on Thursdays
+
+table[(trendStart + 100), ]
 
 ### JUST CODE FOR GRAPHING TRENDS TO FIND THEM
-#cl <- rainbow(52)
-#for (week in as.character(1:52)){
+cl <- rainbow(52)
+for (week in as.character(1:52)){
 #  cat(week, "\n")
-#  weekData <- weeks[[week]]
-  
-  # Remove 2880 last entries, weekend days
-#  weekData <- head(weekData, -2880)
-#  trend = weekData[trendStart:(trendStart + 180)]
-#  if (week == "1"){
-#    plot(trend, type="l", ylim = c(-1, 5), col = cl[as.numeric(week)])
-#  } else {
-#    lines(trend,type="l", col = cl[as.numeric(week)])
-#  }
-#}
+  weekData <- unscaledWeeks[[week]]$Global_active_power
+  trend = weekData[trendStart:(trendStart + numPoints)]
+  if (week == "1"){
+    plot(trend, type="l", ylim = c(0, 9.5), col = cl[as.numeric(week)])
+  } else {
+    lines(trend,type="l", col = cl[as.numeric(week)])
+  }
+}
+
 
 HMMTrainTest <- list()
 for (week in 1:52){
   weekData <- scaledWeeks[[week]]
-  trend <-weekData[trendStart:(trendStart + 180),]
+  trend <-weekData[trendStart:(trendStart + numPoints),]
   trend <- trend[ -c(1,2) ]
   trend$weekID = week
   typeof(trend)
@@ -65,30 +71,41 @@ for (week in 1:52){
 
 test <- do.call(rbind, HMMTrainTest)
 
-# Add data into training dataframe/set
-HMMTrain <- list()
-for (week in as.character(1:52)){
-  weekData <- weeks[[week]]
-  trend = weekData[trendStart:(trendStart + 180)]
-  typeof(trend)
-  HMMTrain <- append(HMMTrain, list(trend))
+testWithoutWeekID = test[ -c(8)]
+times <- rep(numPoints + 1, 52)
+
+names(test)
+set.seed(10)
+bicList = list()
+llList = list()
+for (num in 3:16){
+  model <- depmix(Global_active_power ~ 1, data = testWithoutWeekID, nstates = num, ntimes = times)
+  fitModel <- fit(model)
+  
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+
 }
 
-
-# Row = week of data, column = number
-HMMTrainDF <- as.data.frame(do.call(rbind, HMMTrain))
-typeof(df)
-typeof(as.data.frame(HMMTrain))
+df <- data.frame(unlist(bicList),unlist(llList))
+names(df) = c("BIC","ll")
+df$absDist <- abs(df$BIC - df$ll)
 
 
-set.seed(1)
-testWithoutWeekID = test[ -c(8)]
-times <- rep(181, 52)
-model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 5, ntimes = times)
-fitModel <- fit(model)
-BIC(fitModel)
-logLik(fitModel)
-str(test)
-
+print(df)
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
+
+###############################################################################
+GraphPlot <- plot(x = c(3:16), y = df$BIC, 
+                 main = "BIC/LogLike Graph", xlab = "NStates", 
+                  ylab = "BIC/LogLik Scoring",
+                  ylim = c(-9000, 18000), type = "l", lty = 1, 
+                  lwd= 2, col = "red")
+points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=2, col = "blue")
+legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+lines(x = c(3:16), y = rep(0, 14), type = "l", lty = 1, lwd=2, col = "black")
+
