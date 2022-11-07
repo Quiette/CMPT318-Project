@@ -25,7 +25,13 @@ table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
 ## PART 1: PCA ANALYSIS AND SELECTION
 
 # scale all numeric columns using standardization
-scaledTable <- table %>% mutate(across(where(is.numeric), scale))
+scaledTable <- table 
+for(i in 1:ncol(scaledTable)){
+  cat(i, "\n")
+  if (is.numeric(scaledTable[,i])){
+    scaledTable[,i] <- scale(scaledTable[,i])
+  }
+}
 
 pca <- prcomp(na.exclude(scaledTable[, -c(1,2)]))
  
@@ -48,11 +54,13 @@ biplot$layers[[txt]] <- geom_label(aes(x = xvar, y = yvar, label = varname,
                               label.size = NA,
                               data = biplot$layers[[txt]]$data, 
                               fill = '#dddddd80')
-biplot + theme_minimal() + xlim(-2, 0.5)
+biplot + theme_minimal() + xlim(-2.5, 0.1)
 
 
 # Take only values which are important to PC1 and PC2. 
-postPCATable <- scaledTable[,c(1, 2, 6, 8, 9)]
+# PCA 1 == Global Intensity = 6, and GlobalActive = 3
+# PCA 2 == SubMeter 2 = 9 and GlobalReactive = 4
+postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
