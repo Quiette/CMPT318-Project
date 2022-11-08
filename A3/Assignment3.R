@@ -15,20 +15,26 @@ getwd()
 table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
 
 # scale all numeric columns
-scaledTable <- table %>% mutate(across(where(is.numeric), scale))
+#scaledTable <- table %>% mutate(across(where(is.numeric), scale))
 
-scaledTableTwo <- table %>% mutate_if(is.numeric, scale)
-#isolate global intensity
-Global_Intensity <- scaledTable$Global_intensity
-Global_IntensityTwo <- scaledTableTwo$Global_intensity
+scaledTable <- table 
+for(i in 1:ncol(scaledTable)){
+  cat(i, "\n")
+  if (is.numeric(scaledTable[,i])){
+    scaledTable[,i] <- scale(scaledTable[,i])
+  }
+}
 
-identical(Global_IntensityTwo,Global_Intensity)
+
+identical(table,scaledTable)
 
 # Split data into weeks. Each row index = 1 minute
 n <- 10080
 nr <- nrow(table)
-weeks <- split(Global_Intensity, rep(1:ceiling(nr/n), each=n, length.out=nr))
+weeks <- split(scaledTable$Voltage, rep(1:ceiling(nr/n), each=n, length.out=nr))
 scaledWeeks <- split(scaledTable, rep(1:ceiling(nr/n), each=n, length.out=nr))
+
+unscaledWeeks <- split(table, rep(1:ceiling(nr/n), each=n, length.out=nr))
 # remove incomplete week of week 53
 weeks <- weeks[- 53]
 scaledWeeks <- scaledWeeks [- 53]
@@ -37,8 +43,8 @@ scaledWeeks <- scaledWeeks [- 53]
 trendStart = 9000
 
 ### JUST CODE FOR GRAPHING TRENDS TO FIND THEM
-#cl <- rainbow(52)
-#for (week in as.character(1:52)){
+cl <- rainbow(52)
+for (week in as.character(1:52)){
 #  cat(week, "\n")
 #  weekData <- weeks[[week]]
 
@@ -55,7 +61,7 @@ trendStart = 9000
 HMMTrainTest <- list()
 for (week in 1:52){
   weekData <- scaledWeeks[[week]]
-  trend <-weekData[trendStart:(trendStart + 180),]
+  trend <-weekData[trendStart:(trendStart + numPoints),]
   trend <- trend[ -c(1,2) ]
   trend$weekID = week
   typeof(trend)
@@ -73,11 +79,9 @@ for (week in as.character(1:52)){
   HMMTrain <- append(HMMTrain, list(trend))
 }
 
-
-# Row = week of data, column = number
-HMMTrainDF <- as.data.frame(do.call(rbind, HMMTrain))
-typeof(df)
-typeof(as.data.frame(HMMTrain))
+df <- data.frame(unlist(bicList),unlist(llList))
+names(df) = c("BIC","ll")
+df$absDist <- abs(df$BIC - df$ll)
 
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
