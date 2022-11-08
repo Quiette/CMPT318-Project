@@ -5,7 +5,6 @@ library(forecast)
 library(zoo)
 library(quantmod)
 library(plotly)
-install.packages("depmixS4")
 library(depmixS4)
 library(HMM)
 #set working directory
@@ -35,15 +34,15 @@ weeks <- weeks[- 53]
 scaledWeeks <- scaledWeeks [- 53]
 
 # Possible starts: 1300, 1700
-trendStart = 1700
+trendStart = 9000
 
 ### JUST CODE FOR GRAPHING TRENDS TO FIND THEM
 #cl <- rainbow(52)
 #for (week in as.character(1:52)){
 #  cat(week, "\n")
 #  weekData <- weeks[[week]]
-  
-  # Remove 2880 last entries, weekend days
+
+# Remove 2880 last entries, weekend days
 #  weekData <- head(weekData, -2880)
 #  trend = weekData[trendStart:(trendStart + 180)]
 #  if (week == "1"){
@@ -64,7 +63,7 @@ for (week in 1:52){
 }
 
 test <- do.call(rbind, HMMTrainTest)
-
+identical(table$Voltage ,scaledTable$Voltage)
 # Add data into training dataframe/set
 HMMTrain <- list()
 for (week in as.character(1:52)){
@@ -83,36 +82,36 @@ typeof(as.data.frame(HMMTrain))
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
 times <- rep(181, 52)
-model <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 3, ntimes = times)
-model2 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 7, ntimes = times)
-model3 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 8, ntimes = times)
-model4 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 9, ntimes = times)
-model5 <- depmix(Global_intensity ~ 1, data = testWithoutWeekID, nstates = 10, ntimes = times)
 
-fitModel <- fit(model)
-fitModel2 <- fit(model2)
-fitModel3 <- fit(model3)
-fitModel4 <- fit(model4)
-fitModel5 <- fit(model5)
+bicList = list()
+llList = list()
+for (num in 3:16){
+  model <- depmix(response =Voltage ~ 1, data = testWithoutWeekID, nstates = num, ntimes = times)
+  fitModel <- fit(model)
+  
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+}
 
-bic <- BIC(fitModel)
-bic2 <- BIC(fitModel2)
-bic3 <- BIC(fitModel3)
-bic4 <- BIC(fitModel4)
-bic5 <- BIC(fitModel5)
-
-l <- logLikHmm(fitModel)
-l2 <- logLik(fitModel2)
-l3 <- logLik(fitModel3)
-l4 <- logLik(fitModel4)
-l5 <- logLik(fitModel5)
-
-str(test)
-bic <- c(bic,bic2,bic3,bic4,bic5)
-ll <- c(l,l2,l3,l4,l5)
-
-df <- data.frame(bic,ll)
+df <- data.frame(unlist(bicList),unlist(llList))
+names(df) = c("BIC","ll")
+#make log values negative (change later)
 
 print (df)
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
+
+###############################################################################
+GraphPlot <- plot(x = c(3:16), y = df$BIC, 
+                  main = "BIC/LogLike Graph", xlab = "NStates", 
+                  ylab = "BIC/LogLik Scoring",
+                  ylim = c(-10000, 15000), type = "l", lty = 1, 
+                  lwd= 0.5, col = "red")
+points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+abline(h = 0,lty="dashed")
+legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+
