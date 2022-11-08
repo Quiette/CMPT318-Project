@@ -9,7 +9,7 @@ library(plotly)
 library(depmixS4)
 #install.packages("devtools")
 library(devtools)
-#install_github("vqv/ggbiplot")
+install_github("vqv/ggbiplot")
 library(ggbiplot)
 #install.packages("gginnards")
 library(gginnards)
@@ -55,13 +55,27 @@ biplot$layers[[txt]] <- geom_label(aes(x = xvar, y = yvar, label = varname,
                               data = biplot$layers[[txt]]$data, 
                               fill = '#dddddd80')
 biplot + theme_minimal() + xlim(-2.5, 0.1)
-
-
+trendStart = 6000
+numPoints = 200
 # Take only values which are important to PC1 and PC2. 
 # PCA 1 == Global Intensity = 6, and GlobalActive = 3
 # PCA 2 == SubMeter 2 = 9 and GlobalReactive = 4
 postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
-
+n <- 10080
+nr <- nrow(postPCATable)
+weeks <- split(postPCATable, rep(1:ceiling(nr/n), each=n, length.out=nr))
+weeks <- weeks[- 53]
+trendStart = 9000
+numPoints = 200
+HMMTrainTest <- list()
+for (week in 1:52){
+  weekData <- weeks[[week]]
+  trend <-weekData[trendStart:(trendStart + numPoints),]
+  trend <- trend[ -c(1,2) ]
+  trend$weekID = week
+  typeof(trend)
+  HMMTrainTest <- append(HMMTrainTest, list(trend))
+}
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 

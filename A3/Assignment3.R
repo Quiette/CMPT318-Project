@@ -44,7 +44,7 @@ trendStart = 9000
 
 ### JUST CODE FOR GRAPHING TRENDS TO FIND THEM
 cl <- rainbow(52)
-for (week in as.character(1:52)){
+#for (week in as.character(1:52)){
 #  cat(week, "\n")
 #  weekData <- weeks[[week]]
 
@@ -57,7 +57,7 @@ for (week in as.character(1:52)){
 #    lines(trend,type="l", col = cl[as.numeric(week)])
 #  }
 #}
-
+numPoints = 200
 HMMTrainTest <- list()
 for (week in 1:52){
   weekData <- scaledWeeks[[week]]
