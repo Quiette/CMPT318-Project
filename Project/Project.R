@@ -55,7 +55,7 @@ biplot$layers[[txt]] <- geom_label(aes(x = xvar, y = yvar, label = varname,
                               data = biplot$layers[[txt]]$data, 
                               fill = '#dddddd80')
 biplot + theme_minimal() + xlim(-2.5, 0.1)
-trendStart = 6000
+trendStart = 5501
 numPoints = 200
 # Take only values which are important to PC1 and PC2. 
 # PCA 1 == Global Intensity = 6, and GlobalActive = 3
@@ -65,17 +65,31 @@ n <- 10080
 nr <- nrow(postPCATable)
 weeks <- split(postPCATable, rep(1:ceiling(nr/n), each=n, length.out=nr))
 weeks <- weeks[- 53]
-trendStart = 9000
-numPoints = 200
-HMMTrainTest <- list()
-for (week in 1:52){
+
+HMMTrain <- list()
+HMMTest <- list()
+for (week in 1:39){
   weekData <- weeks[[week]]
   trend <-weekData[trendStart:(trendStart + numPoints),]
   trend <- trend[ -c(1,2) ]
   trend$weekID = week
   typeof(trend)
-  HMMTrainTest <- append(HMMTrainTest, list(trend))
+  HMMTrain <- append(HMMTrain, list(trend))
 }
+for (week in 40:52){
+  weekData <- weeks[[week]]
+  trend <-weekData[trendStart:(trendStart + numPoints),]
+  trend <- trend[ -c(1,2) ]
+  trend$weekID = week
+  typeof(trend)
+  HMMTest <- append(HMMTest, list(trend))
+}
+
+trainingData <- do.call(rbind, HMMTrain)
+trainingData = trainingData[ -c(8)]
+set.seed(1)
+times <- rep(201, 39)
+model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 3, ntimes = times)
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
