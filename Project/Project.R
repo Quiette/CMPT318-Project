@@ -61,6 +61,9 @@ numPoints = 200
 # PCA 1 == Global Intensity = 6, and GlobalActive = 3
 # PCA 2 == SubMeter 2 = 9 and GlobalReactive = 4
 postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
+################################################################################
+## PART 2: TRAINING AND TESTING MULTIVAR HMM
+
 n <- 10080
 nr <- nrow(postPCATable)
 weeks <- split(postPCATable, rep(1:ceiling(nr/n), each=n, length.out=nr))
@@ -88,10 +91,98 @@ for (week in 40:52){
 trainingData <- do.call(rbind, HMMTrain)
 trainingData = trainingData[ -c(8)]
 set.seed(1)
-times <- rep(201, 39)
-model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 3, ntimes = times)
-################################################################################
-## PART 2: TRAINING AND TESTING MULTIVAR HMM
+times <- rep(numPoints+1, 39)
 
+
+bicList = list()
+llList = list()
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 4, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 8, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 10, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 11, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 13, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 14, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+  set.seed(1)
+  model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 16, ntimes = times)
+  fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+  bic <- BIC(fitModel)
+  bicList <- append(bicList, bic)
+  l <- logLik(fitModel)
+  llList <- append(llList, l)
+  
+# for (num in seq(4,16,4)){
+#   set.seed(1)
+#   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
+# 
+#   fitModel <- fit(model,emcontrol=em.control(classification="hard"))
+# 
+# 
+# bic <- BIC(fitModel)
+# bicList <- append(bicList, bic)
+# 
+# l <- logLik(fitModel)
+# llList <- append(llList, l)
+# }
+
+df <- data.frame(unlist(bicList),unlist(llList))
+names(df) = c("BIC","ll")
+#make log values negative (change later)
+
+print (df)
+# HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
+# Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
+
+###############################################################################
+GraphPlot <- plot(x = c(4,8,10,11,14,15,16), y = df$BIC, 
+                  main = "BIC/LogLike Graph", xlab = "NStates", 
+                  ylab = "BIC/LogLik Scoring",
+                  ylim = c(-40000, 50000), type = "l", lty = 1, 
+                  lwd= 0.5, col = "red")
+points(x = c(4,8,10,11,14,15,16), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+abline(h = 0,lty="dashed")
+legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
