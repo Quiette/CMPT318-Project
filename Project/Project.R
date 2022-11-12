@@ -125,18 +125,12 @@ times <- rep(numPoints+1, 39)
 testNTimes <- rep(numPoints+1, 13)
 # print (df)
 set.seed(1)
-model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 9, ntimes = testNTimes)
+model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 10, ntimes = times)
 fitModel <- fit(model)
-model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 9, ntimes = testNTimes)
+model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 10, ntimes = testNTimes)
 model2 <- setpars(model2,getpars(fitModel))
-fb <- forwardbackward(fitModel)
+fb <- forwardbackward(model2)
 
-set.seed(1)
-modeltrain <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 9, ntimes = times)
-fitModeltrain <- fit(modeltrain)
-model2train <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 9, ntimes = times)
-model2train <- setpars(model2train,getpars(fitModeltrain))
-fbt <- forwardbackward(fitModeltrain)
 
 ###############################################################################
 GraphPlot <- plot(x = (4:10), y = df$BIC, 

@@ -6,7 +6,6 @@ library(zoo)
 library(quantmod)
 library(plotly)
 library(depmixS4)
-library(HMM)
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
@@ -85,7 +84,7 @@ df$absDist <- abs(df$BIC - df$ll)
 
 set.seed(1)
 testWithoutWeekID = test[ -c(8)]
-times <- rep(181, 52)
+times <- rep(201, 52)
 
 bicList = list()
 llList = list()
