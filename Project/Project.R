@@ -9,7 +9,7 @@ library(plotly)
 library(depmixS4)
 #install.packages("devtools")
 library(devtools)
-install_github("vqv/ggbiplot")
+#install_github("vqv/ggbiplot")
 library(ggbiplot)
 #install.packages("gginnards")
 library(gginnards)
@@ -59,11 +59,15 @@ trendStart = 7001
 numPoints = 200
 # Take only values which are important to PC1 and PC2. 
 # PCA 1 == Global Intensity = 6, and GlobalActive = 3
-# PCA 2 == SubMeter 2 = 9 and GlobalReactive = 4
+# PCA 2 == SubMeter 3 = 9 and GlobalReactive = 4
 postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
+trendStart = 7001
+postPCATable[trendStart,]
+numPoints = 200
+postPCATable[trendStart + numPoints,]
 n <- 10080
 nr <- nrow(postPCATable)
 weeks <- split(postPCATable, rep(1:ceiling(nr/n), each=n, length.out=nr))
@@ -171,18 +175,16 @@ names(df) = c("BIC","ll")
 #make log values negative (change later)
 
 print (df)
-# HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
-# Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
 
 ###############################################################################
 GraphPlot <- plot(x = c(4,8,10,11,14,15), y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
-                  ylim = c(-40000, 50000), type = "l", lty = 1, 
+                  ylim = c(-17000, 35000), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
 points(x = c(4,8,10,11,14,15), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
-legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
+legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
