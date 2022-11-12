@@ -63,7 +63,7 @@ postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
-trendStart = 7001
+trendStart = 5501
 postPCATable[trendStart,]
 numPoints = 200
 postPCATable[trendStart + numPoints,]
@@ -99,23 +99,42 @@ set.seed(1)
 times <- rep(numPoints+1, 39)
 
 
-# bicList = list()
-# llList = list()
-# for (num in (4:10)){
-#   cat(num, ":\n")
-#   set.seed(1)
-#   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
-#   
-#   fitModel <- fit(model,emcontrol=em.control(classification="hard"))
-#   
-#   
-#   bic <- BIC(fitModel)
-#   bicList <- append(bicList, bic)
-#   
-#   l <- logLik(fitModel)
-#   llList <- append(llList, l)
-# }
+bicList = list()
+llList = list()
+xList = list()
 
+trainedModels = list()
+for (num in seq(4, 18, 2)){
+   cat(num, ":\n")
+   set.seed(1)
+   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
+   
+   fitModel <- fit(model)
+   trainedModels[num] <- fitModel
+   
+   bic <- BIC(fitModel)
+   bicList <- append(bicList, bic)
+   
+   l <- logLik(fitModel)
+   llList <- append(llList, l)
+   
+   xList <- append(xList, num)
+}
+df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
+names(df) = c("BIC","ll", "X")
+df2 <- df[(df$ll <= 0), ]
+df2 <- df2[(df2$BIC >= 0), ]
+names(df) = c("BIC","ll", "X")
+
+GraphPlot <- plot(x = df2$X, y = df2$BIC, 
+                  main = "BIC/LogLike Graph", xlab = "NStates", 
+                  ylab = "BIC/LogLik Scoring",
+                  ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
+                  lwd= 0.5, col = "red")
+points(x = df2$X, y = df2$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+abline(h = 0,lty="dashed")
+legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
+       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 
 
 # df <- data.frame(unlist(bicList),unlist(llList))
@@ -124,29 +143,19 @@ times <- rep(numPoints+1, 39)
 
 testNTimes <- rep(numPoints+1, 13)
 # print (df)
-set.seed(1)
-model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 9, ntimes = testNTimes)
-fitModel <- fit(model)
-model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 9, ntimes = testNTimes)
-model2 <- setpars(model2,getpars(fitModel))
-fb <- forwardbackward(fitModel)
 
-set.seed(1)
-modeltrain <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 9, ntimes = times)
-fitModeltrain <- fit(modeltrain)
-model2train <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 9, ntimes = times)
-model2train <- setpars(model2train,getpars(fitModeltrain))
-fbt <- forwardbackward(fitModeltrain)
+testLikelihood <- function(states) {
+  model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = states, ntimes = testNTimes)
+  model2 <- setpars(model2,getpars(trainedModels[[states]]))
+  fb <- forwardbackward(model2)
+  print(fb$logLike)
+  return(fb$logLike)
+}
 
-###############################################################################
-GraphPlot <- plot(x = (4:10), y = df$BIC, 
-                  main = "BIC/LogLike Graph", xlab = "NStates", 
-                  ylab = "BIC/LogLik Scoring",
-                  ylim = c(-17000, 35000), type = "l", lty = 1, 
-                  lwd= 0.5, col = "red")
-points(x = (4:10), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
-abline(h = 0,lty="dashed")
-legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
-       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+model1LL <- testLikelihood(14)
+model2LL <- testLikelihood(16)
+model3LL <- testLikelihood(10)
+
+
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
