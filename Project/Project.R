@@ -66,18 +66,18 @@ postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
-trendStart = 5501
+trendStart = 2300
 postPCATable[trendStart,]
 numPoints = 200
 postPCATable[trendStart + numPoints,]
 n <- 10080
 nr <- nrow(postPCATable)
 weeks <- split(postPCATable, rep(1:ceiling(nr/n), each=n, length.out=nr))
-weeks <- weeks[- 53]
+weeks <- weeks[- 155]
 
 HMMTrain <- list()
 HMMTest <- list()
-for (week in 1:39){
+for (week in 1:115){
   weekData <- weeks[[week]]
   trend <-weekData[trendStart:(trendStart + numPoints),]
   trend <- trend[ -c(1,2) ]
@@ -85,7 +85,7 @@ for (week in 1:39){
   typeof(trend)
   HMMTrain <- append(HMMTrain, list(trend))
 }
-for (week in 40:52){
+for (week in 116:154){
   weekData <- weeks[[week]]
   trend <-weekData[trendStart:(trendStart + numPoints),]
   trend <- trend[ -c(1,2) ]
@@ -99,39 +99,40 @@ testingData = testingData[ -c(8)]
 trainingData <- do.call(rbind, HMMTrain)
 trainingData = trainingData[ -c(8)]
 set.seed(1)
-times <- rep(numPoints+1, 39)
+times <- rep(numPoints+1, 115)
 
 
 bicList = list()
 llList = list()
 xList = list()
 
+
 trainedModels = list()
-for (num in seq(4, 18, 2)){
-   cat(num, ":\n")
-   set.seed(1)
-   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
-   
-   fitModel <- fit(model)
-   trainedModels[num] <- fitModel
-   
+ for (num in seq(4, 18, 2)){
+    cat(num, ":\n")
+    set.seed(1)
+    model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
+
+    fitModel <- fit(model)
+    trainedModels[num] <- fitModel
+
    bic <- BIC(fitModel)
-   bicList <- append(bicList, bic)
-   
-   l <- logLik(fitModel)
-   llList <- append(llList, l)
-   
-   xList <- append(xList, num)
-}
+    bicList <- append(bicList, bic)
 
-df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
-names(df) = c("BIC","ll", "X")
+    l <- logLik(fitModel)
+    llList <- append(llList, l)
 
-# df <- data.frame(unlist(bicList),unlist(llList))
-# names(df) = c("BIC","ll")
+    xList <- append(xList, num)
+ }
+
+ df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
+ names(df) = c("BIC","ll", "X")
+
+ df <- data.frame(unlist(bicList),unlist(llList))
+ names(df) = c("BIC","ll")
 #make log values negative (change later)
 
-testNTimes <- rep(numPoints+1, 13)
+testNTimes <- rep(numPoints+1, 39)
 # print (df)
 set.seed(1)
 model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 10, ntimes = times)
@@ -142,18 +143,18 @@ fb <- forwardbackward(model2)
 
 
 ###############################################################################
-GraphPlot <- plot(x = (4:10), y = df$BIC, 
+GraphPlot <- plot(x = seq(4, 18, 2), y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
                   ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
-points(x = df$X, y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x = seq(4, 18, 2), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 
 
-testNTimes <- rep(numPoints+1, 13)
+testNTimes <- rep(numPoints+1, 39)
 
 testLikelihood <- function(states) {
   model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = states, ntimes = testNTimes)
