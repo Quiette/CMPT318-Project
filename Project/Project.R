@@ -19,7 +19,7 @@ setwd(dirname(getActiveDocumentContext()$path))
 getwd()
 
 #get txt file data
-table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
+table <- read.table("TermProjectData.txt", header = TRUE, sep = ",")
 
 ################################################################################
 ## PART 1: PCA ANALYSIS AND SELECTION
@@ -28,11 +28,14 @@ table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
 scaledTable <- table 
 for(i in 1:ncol(scaledTable)){
   cat(i, "\n")
-  if (is.numeric(scaledTable[,i])){
-    scaledTable[,i] <- scale(scaledTable[,i])
+  if (is.numeric(table[,i])){
+    scaledTable[,i] <- scale(table[,i])
   }
 }
 
+# Data ranges for Saturday, December 16, 2006 to Monday, January 12, 2009
+#head(table)
+#tail(table)
 pca <- prcomp(na.exclude(scaledTable[, -c(1,2)]))
 
 summary(pca)
@@ -120,29 +123,22 @@ for (num in seq(4, 18, 2)){
    
    xList <- append(xList, num)
 }
+
 df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
 names(df) = c("BIC","ll", "X")
-df2 <- df[(df$ll <= 0), ]
-df2 <- df2[(df2$BIC >= 0), ]
-names(df) = c("BIC","ll", "X")
 
-GraphPlot <- plot(x = df2$X, y = df2$BIC, 
+GraphPlot <- plot(x = df$X, y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
                   ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
-points(x = df2$X, y = df2$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x = df$X, y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 
 
-# df <- data.frame(unlist(bicList),unlist(llList))
-# names(df) = c("BIC","ll")
-#make log values negative (change later)
-
 testNTimes <- rep(numPoints+1, 13)
-# print (df)
 
 testLikelihood <- function(states) {
   model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = states, ntimes = testNTimes)
