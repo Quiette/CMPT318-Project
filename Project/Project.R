@@ -19,7 +19,7 @@ setwd(dirname(getActiveDocumentContext()$path))
 getwd()
 
 #get txt file data
-table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
+table <- read.table("TermProjectData.txt", header = TRUE, sep = ",")
 
 ################################################################################
 ## PART 1: PCA ANALYSIS AND SELECTION
@@ -28,11 +28,14 @@ table <- read.table("Group_Assignment_2_Dataset.txt", header = TRUE, sep = ",")
 scaledTable <- table 
 for(i in 1:ncol(scaledTable)){
   cat(i, "\n")
-  if (is.numeric(scaledTable[,i])){
-    scaledTable[,i] <- scale(scaledTable[,i])
+  if (is.numeric(table[,i])){
+    scaledTable[,i] <- scale(table[,i])
   }
 }
 
+# Data ranges for Saturday, December 16, 2006 to Monday, January 12, 2009
+#head(table)
+#tail(table)
 pca <- prcomp(na.exclude(scaledTable[, -c(1,2)]))
 
 summary(pca)
@@ -63,7 +66,7 @@ postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
-trendStart = 7001
+trendStart = 5501
 postPCATable[trendStart,]
 numPoints = 200
 postPCATable[trendStart + numPoints,]
@@ -99,24 +102,30 @@ set.seed(1)
 times <- rep(numPoints+1, 39)
 
 
-# bicList = list()
-# llList = list()
-# for (num in (4:10)){
-#   cat(num, ":\n")
-#   set.seed(1)
-#   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
-#   
-#   fitModel <- fit(model,emcontrol=em.control(classification="hard"))
-#   
-#   
-#   bic <- BIC(fitModel)
-#   bicList <- append(bicList, bic)
-#   
-#   l <- logLik(fitModel)
-#   llList <- append(llList, l)
-# }
+bicList = list()
+llList = list()
+xList = list()
 
+trainedModels = list()
+for (num in seq(4, 18, 2)){
+   cat(num, ":\n")
+   set.seed(1)
+   model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
+   
+   fitModel <- fit(model)
+   trainedModels[num] <- fitModel
+   
+   bic <- BIC(fitModel)
+   bicList <- append(bicList, bic)
+   
+   l <- logLik(fitModel)
+   llList <- append(llList, l)
+   
+   xList <- append(xList, num)
+}
 
+df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
+names(df) = c("BIC","ll", "X")
 
 # df <- data.frame(unlist(bicList),unlist(llList))
 # names(df) = c("BIC","ll")
@@ -136,11 +145,28 @@ fb <- forwardbackward(model2)
 GraphPlot <- plot(x = (4:10), y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
-                  ylim = c(-17000, 35000), type = "l", lty = 1, 
+                  ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
-points(x = (4:10), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x = df$X, y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+
+
+testNTimes <- rep(numPoints+1, 13)
+
+testLikelihood <- function(states) {
+  model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = states, ntimes = testNTimes)
+  model2 <- setpars(model2,getpars(trainedModels[[states]]))
+  fb <- forwardbackward(model2)
+  print(fb$logLike)
+  return(fb$logLike)
+}
+
+model1LL <- testLikelihood(14)
+model2LL <- testLikelihood(16)
+model3LL <- testLikelihood(10)
+
+
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
