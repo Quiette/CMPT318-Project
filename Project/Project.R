@@ -66,7 +66,7 @@ postPCATable <- scaledTable[,c(1, 2, 3, 4, 6, 9)]
 ################################################################################
 ## PART 2: TRAINING AND TESTING MULTIVAR HMM
 
-trendStart = 2300
+trendStart = 100
 postPCATable[trendStart,]
 numPoints = 200
 postPCATable[trendStart + numPoints,]
@@ -108,10 +108,10 @@ xList = list()
 
 
 trainedModels = list()
- for (num in seq(4, 18, 2)){
+ for (num in 4:14){
     cat(num, ":\n")
     set.seed(1)
-    model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = num, ntimes = times)
+    model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list( gaussian(),gaussian(), gaussian(),gaussian()), data = trainingData, nstates = num, ntimes = times)
 
     fitModel <- fit(model)
     trainedModels[num] <- fitModel
@@ -135,20 +135,19 @@ trainedModels = list()
 testNTimes <- rep(numPoints+1, 39)
 # print (df)
 set.seed(1)
-model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 10, ntimes = times)
-fitModel <- fit(model)
-model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 10, ntimes = testNTimes)
-model2 <- setpars(model2,getpars(fitModel))
-fb <- forwardbackward(model2)
-
+# model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 7, ntimes = times)
+# fitModel <- fit(model)
+# model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 7, ntimes = testNTimes)
+# model2 <- setpars(model2,getpars(fitModel))
+# fb <- forwardbackward(model2)
 
 ###############################################################################
-GraphPlot <- plot(x = seq(4, 18, 2), y = df$BIC, 
+GraphPlot <- plot(x = c(4,5,6,7,8,9,10,11,12,13,14), y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
                   ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
-points(x = seq(4, 18, 2), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x =  c(4,5,6,7,8,9,10,11,12,13,14), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
@@ -165,8 +164,8 @@ testLikelihood <- function(states) {
 }
 
 model1LL <- testLikelihood(14)
-model2LL <- testLikelihood(16)
-model3LL <- testLikelihood(10)
+model2LL <- testLikelihood(13)
+model3LL <- testLikelihood(12)
 
 
 ################################################################################
