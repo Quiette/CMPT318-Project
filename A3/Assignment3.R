@@ -106,16 +106,16 @@ GraphPlot <- plot(x = df$x, y = df$BIC,
                   ylab = "BIC/LogLik Scoring",
                   ylim = c(-9000, 18000), type = "l", lty = 1, 
                   lwd= 2, col = "red")
-points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=2, col = "blue")
+points(x = df$x, y = df$ll, type = "l", lty = 1, lwd=2, col = "blue")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
-lines(x = c(3:16), y = rep(0, 14), type = "l", lty = 1, lwd=2, col = "black")
+lines(x = df$x, y = rep(0, 14), type = "l", lty = 1, lwd=2, col = "black")
 
 ####
 coeff <- -0.35
-ggplot(df, aes(x=c(3:16))) +
+ggplot(df, aes(x=df$x)) +
   
-  geom_line(aes(y=df$BIC), size=2, color="red") + 
-  geom_line(aes(y=df$ll/coeff), size=2, color="blue") +
+  geom_line(aes(y=df$BIC, color="red"), size=2) + 
+  geom_line(aes(y=df$ll/coeff, color="blue"), size=2) +
   scale_y_continuous(
     
     # Features of the first axis
@@ -127,7 +127,14 @@ ggplot(df, aes(x=c(3:16))) +
   
   theme(
     axis.title.y = element_text(color = "red", size=13),
-    axis.title.y.right = element_text(color = "blue", size=13)
+    axis.title.y.right = element_text(color = "blue", size=13),
+    legend.position = c(0.8, 0.8)
   ) +
   
-  ggtitle("LogLike/BIC per NStates") + labs(x = "Number of States")
+  ggtitle("LogLike/BIC per NStates") + labs(x = "Number of States") +
+  scale_color_identity(name = "Scoring Functions",
+                       breaks = c("red", "blue"),
+                       labels = c("BIC", "Log-Likelihood"),
+                       guide = "legend")
+                                                                       
+                                                                                       
