@@ -5,7 +5,9 @@ library(forecast)
 library(zoo)
 library(quantmod)
 library(plotly)
+#install.packages("depmixS4")
 library(depmixS4)
+
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
@@ -38,25 +40,25 @@ unscaledWeeks <- split(table, rep(1:ceiling(nr/n), each=n, length.out=nr))
 weeks <- weeks[- 53]
 scaledWeeks <- scaledWeeks [- 53]
 
-# Possible starts: 1300, 1700
-trendStart = 9000
+trendStart = 5501 # Start @ 19:40 on Thursdays
+numPoints = 200 # End @ 23:00 on Thursdays
+
+table[(trendStart + 100), ]
 
 ### JUST CODE FOR GRAPHING TRENDS TO FIND THEM
 cl <- rainbow(52)
-#for (week in as.character(1:52)){
-#  cat(week, "\n")
-#  weekData <- weeks[[week]]
+for (week in as.character(1:52)){
+  #  cat(week, "\n")
+  weekData <- unscaledWeeks[[week]]$Global_active_power
+  trend = weekData[trendStart:(trendStart + numPoints)]
+  if (week == "1"){
+    plot(trend, type="l", ylim = c(0, 9.5), col = cl[as.numeric(week)])
+  } else {
+    lines(trend,type="l", col = cl[as.numeric(week)])
+  }
+}
 
-# Remove 2880 last entries, weekend days
-#  weekData <- head(weekData, -2880)
-#  trend = weekData[trendStart:(trendStart + 180)]
-#  if (week == "1"){
-#    plot(trend, type="l", ylim = c(-1, 5), col = cl[as.numeric(week)])
-#  } else {
-#    lines(trend,type="l", col = cl[as.numeric(week)])
-#  }
-#}
-numPoints = 200
+
 HMMTrainTest <- list()
 for (week in 1:52){
   weekData <- scaledWeeks[[week]]
@@ -68,28 +70,16 @@ for (week in 1:52){
 }
 
 test <- do.call(rbind, HMMTrainTest)
-identical(table$Voltage ,scaledTable$Voltage)
-# Add data into training dataframe/set
-HMMTrain <- list()
-for (week in as.character(1:52)){
-  weekData <- weeks[[week]]
-  trend = weekData[trendStart:(trendStart + 180)]
-  typeof(trend)
-  HMMTrain <- append(HMMTrain, list(trend))
-}
 
-df <- data.frame(unlist(bicList),unlist(llList))
-names(df) = c("BIC","ll")
-df$absDist <- abs(df$BIC - df$ll)
-
-set.seed(1)
 testWithoutWeekID = test[ -c(8)]
-times <- rep(201, 52)
+times <- rep(numPoints + 1, 52)
 
+names(test)
+set.seed(10)
 bicList = list()
 llList = list()
 for (num in 3:16){
-  model <- depmix(response =Voltage ~ 1, data = testWithoutWeekID, nstates = num, ntimes = times)
+  model <- depmix(Global_active_power ~ 1, data = testWithoutWeekID, nstates = num, ntimes = times)
   fitModel <- fit(model)
   
   bic <- BIC(fitModel)
@@ -97,24 +87,47 @@ for (num in 3:16){
   
   l <- logLik(fitModel)
   llList <- append(llList, l)
+  
 }
 
 df <- data.frame(unlist(bicList),unlist(llList))
 names(df) = c("BIC","ll")
-#make log values negative (change later)
+df$absDist <- abs(df$BIC - df$ll)
+df$x = c(3:16)
 
-print (df)
+
+print(df)
 # HMMTrainDF[1,] is 1st row values, HMMTrainDF[,1] is first column values
 # Timeframe is from Tuesday 4:19 am to Tuesday 7:19 am
 
 ###############################################################################
-GraphPlot <- plot(x = c(3:16), y = df$BIC, 
+GraphPlot <- plot(x = df$x, y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
-                  ylim = c(-10000, 15000), type = "l", lty = 1, 
-                  lwd= 0.5, col = "red")
-points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
-abline(h = 0,lty="dashed")
-legend("topleft", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
-       cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+                  ylim = c(-9000, 18000), type = "l", lty = 1, 
+                  lwd= 2, col = "red")
+points(x = c(3:16), y = df$ll, type = "l", lty = 1, lwd=2, col = "blue")
+legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
+lines(x = c(3:16), y = rep(0, 14), type = "l", lty = 1, lwd=2, col = "black")
 
+####
+coeff <- -0.35
+ggplot(df, aes(x=c(3:16))) +
+  
+  geom_line(aes(y=df$BIC), size=2, color="red") + 
+  geom_line(aes(y=df$ll/coeff), size=2, color="blue") +
+  scale_y_continuous(
+    
+    # Features of the first axis
+    name = "BIC",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.*coeff, name="LogLike")
+  ) + 
+  
+  theme(
+    axis.title.y = element_text(color = "red", size=13),
+    axis.title.y.right = element_text(color = "blue", size=13)
+  ) +
+  
+  ggtitle("LogLike/BIC per NStates") + labs(x = "Number of States")
