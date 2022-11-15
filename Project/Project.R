@@ -13,6 +13,7 @@ library(devtools)
 library(ggbiplot)
 #install.packages("gginnards")
 library(gginnards)
+library(ggforce)
 
 #set working directory
 setwd(dirname(getActiveDocumentContext()$path)) 
@@ -111,15 +112,15 @@ trainedModels = list()
  for (num in 4:14){
     cat(num, ":\n")
     set.seed(1)
-    model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list( gaussian(),gaussian(), gaussian(),gaussian()), data = trainingData, nstates = num, ntimes = times)
+    #model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list( gaussian(),gaussian(), gaussian(),gaussian()), data = trainingData, nstates = num, ntimes = times)
 
-    fitModel <- fit(model)
-    trainedModels[num] <- fitModel
+    #fitModel <- fit(model)
+    #trainedModels[num] <- fitModel
 
-   bic <- BIC(fitModel)
+    bic <- BIC(trainedModels[[num]])
     bicList <- append(bicList, bic)
 
-    l <- logLik(fitModel)
+    l <- logLik(trainedModels[[num]])
     llList <- append(llList, l)
 
     xList <- append(xList, num)
@@ -127,10 +128,8 @@ trainedModels = list()
 
  df <- data.frame(unlist(bicList),unlist(llList), unlist(xList))
  names(df) = c("BIC","ll", "X")
+ df$absDist <- abs(df$BIC - df$ll)
 
- df <- data.frame(unlist(bicList),unlist(llList))
- names(df) = c("BIC","ll")
-#make log values negative (change later)
 
 testNTimes <- rep(numPoints+1, 39)
 # print (df)
@@ -142,17 +141,72 @@ set.seed(1)
 # fb <- forwardbackward(model2)
 
 ###############################################################################
-GraphPlot <- plot(x = c(4,5,6,7,8,9,10,11,12,13,14), y = df$BIC, 
+GraphPlot <- plot(x = df$X, y = df$BIC, 
                   main = "BIC/LogLike Graph", xlab = "NStates", 
                   ylab = "BIC/LogLik Scoring",
                   ylim = c(min(df$ll), max(df$BIC)), type = "l", lty = 1, 
                   lwd= 0.5, col = "red")
-points(x =  c(4,5,6,7,8,9,10,11,12,13,14), y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
+points(x =  df$X, y = df$ll, type = "l", lty = 1, lwd=0.5, col = "blue")
 abline(h = 0,lty="dashed")
 legend("topright", legend=c("LogLik", "BIC"),col=c("blue", "red"), 
        cex=0.6,title="Data Legend", text.font=4, lty = 1:1)
 
 
+coeff <- -0.45
+ggplot(df, aes(x=df$X)) +
+  
+  geom_line(aes(y=df$BIC, color="red"), size=2) + 
+  geom_line(aes(y=df$ll/coeff, color="blue"), size=2) +
+  scale_y_continuous(
+    
+    # Features of the first axis
+    name = "BIC",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.*coeff, name="LogLike")
+  ) + 
+  
+  theme(
+    axis.title.y = element_text(color = "red", size=13),
+    axis.title.y.right = element_text(color = "blue", size=13),
+    legend.position = c(0.8, 0.8)
+  ) +
+  
+  ggtitle("LogLike/BIC per NStates") + labs(x = "Number of States") +
+  scale_color_identity(name = "Scoring Functions",
+                       breaks = c("red", "blue"),
+                       labels = c("BIC", "Log-Likelihood"),
+                       guide = "legend")
+
+####
+coeff <- -0.45
+ggplot(df, aes(x=df$X)) +
+  
+  geom_line(aes(y=df$BIC, color="red"), size=2) + 
+  geom_line(aes(y=df$ll/coeff, color="blue"), size=2) +
+  scale_y_continuous(
+    
+    # Features of the first axis
+    name = "BIC",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.*coeff, name="LogLike")
+  ) + 
+  
+  theme(
+    axis.title.y = element_text(color = "red", size=13),
+    axis.title.y.right = element_text(color = "blue", size=13),
+    legend.position = c(0.8, 0.6)
+  ) +
+  coord_cartesian(xlim = c(11, 14), ylim = c(78000, 85000)) + 
+  ggtitle("LogLike/BIC per NStates Between 11 and 14") + labs(x = "Number of States") + 
+  scale_color_identity(name = "Scoring Functions",
+                     breaks = c("red", "blue"),
+                     labels = c("BIC", "Log-Likelihood"),
+                     guide = "legend")
+
+
+#####
 testNTimes <- rep(numPoints+1, 39)
 
 testLikelihood <- function(states) {
@@ -163,10 +217,18 @@ testLikelihood <- function(states) {
   return(fb$logLike)
 }
 
-model1LL <- testLikelihood(14)
-model2LL <- testLikelihood(13)
-model3LL <- testLikelihood(12)
+testLL <- list()
+for(i in 4:14){
+  testLL <- append(testLL, (testLikelihood(i)/ 39))
+}
 
+df$testLL <- as.numeric(unlist(testLL))
 
+df$NormLL <- (df$ll / 115)
+
+df$absDistTT <- abs(df$testLL - df$NormLL)
+norm1LL <- model1LL / 39
+norm2LL <- model2LL / 39
+norm3LL <- model3LL / 39
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
