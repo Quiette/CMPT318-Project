@@ -55,11 +55,15 @@ for(i in 1:52){
   cat("\n")
   MSES <- append(MSES,MSE)
 }
+
+#create table for the MSE scores per week
 MSEtable <- do.call(rbind.data.frame, Map('c', c(1:52), MSES))
 colnames(MSEtable)[1] <- "Week"
 colnames(MSEtable)[2] <- "MSE"
 print(smoothenedWeeks[1])
 
+
+#plot the graphs for the most and least anomalous weeks vs the average smoothened week
 plot(AvgSmoothedWeek,type="l",lwd=2,xaxt='n',xlab="Day of the week", ylab = "Global_Intensity (amps)",main="Least anomalous week vs average smoothened week",col="blue",ylim=c(0,20))
 lines(unlist(smoothenedWeeks[30]),type="l",col="red")
 legend(500,20,title="Legend",text.font=3,legend=c("Average smoothened week","week 30"),col=c("blue","red"),lty=1:1, cex=0.8)
