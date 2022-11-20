@@ -35,8 +35,6 @@ for(i in 1:ncol(scaledTable)){
 }
 
 # Data ranges for Saturday, December 16, 2006 to Monday, January 12, 2009
-#head(table)
-#tail(table)
 pca <- prcomp(na.exclude(scaledTable[, -c(1,2)]))
 
 summary(pca)
@@ -132,13 +130,7 @@ trainedModels = list()
 
 
 testNTimes <- rep(numPoints+1, 39)
-# print (df)
 set.seed(1)
-# model <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = trainingData, nstates = 7, ntimes = times)
-# fitModel <- fit(model)
-# model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = testingData, nstates = 7, ntimes = testNTimes)
-# model2 <- setpars(model2,getpars(fitModel))
-# fb <- forwardbackward(model2)
 
 ###############################################################################
 GraphPlot <- plot(x = df$X, y = df$BIC, 
@@ -227,9 +219,6 @@ df$testLL <- as.numeric(unlist(testLL))
 df$NormLL <- (df$ll / 115)
 
 df$absDistTT <- abs(df$testLL - df$NormLL)
-# norm1LL <- model1LL / 39
-# norm2LL <- model2LL / 39
-# norm3LL <- model3LL / 39
 
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
@@ -247,7 +236,7 @@ scaledAnomTable$Global_intensity <- scale(anomTable$Global_intensity, center=4.6
 scaledAnomTable$Sub_metering_3 <- scale(anomTable$Sub_metering_3, center=6.17, scale=8.32)
 
 postAnomTable <- scaledAnomTable[,c(1, 2, 3, 4, 6, 9)]
-optStates = 13
+optStates = 9
 anomTrendStart = 6057
 
 nr2 <- nrow(postAnomTable)
