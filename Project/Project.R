@@ -222,47 +222,48 @@ df$absDistTT <- abs(df$testLL - df$NormLL)
 
 ################################################################################
 ## PART 3: ANOMOLY DETECTION
+optStates = 9
 
 anomTable1 <- read.table("DataWithAnomalies1.txt", header = TRUE, sep = ",")
 anomTable2 <- read.table("DataWithAnomalies2.txt", header = TRUE, sep = ",")
 anomTable3 <- read.table("DataWithAnomalies3.txt", header = TRUE, sep = ",")
 
 anomalyDetect <- function(anomTable) {
-scaledAnomTable <- anomTable
-
-scaledAnomTable$Global_active_power <- scale(anomTable$Global_active_power, center=1.23, scale=1.06)
-scaledAnomTable$Global_reactive_power <- scale(anomTable$Global_reactive_power, center=0.122, scale=0.112)
-scaledAnomTable$Global_intensity <- scale(anomTable$Global_intensity, center=4.64, scale=4.58)
-scaledAnomTable$Sub_metering_3 <- scale(anomTable$Sub_metering_3, center=6.17, scale=8.32)
-
-postAnomTable <- scaledAnomTable[,c(1, 2, 3, 4, 6, 9)]
-optStates = 9
-anomTrendStart = 6057
-
-nr2 <- nrow(postAnomTable)
-anomWeeks <- split(postAnomTable, rep(1:ceiling(nr2/n), each=n, length.out=nr2))
-anomWeeks <- anomWeeks[- 52]
-
-anomHMMTest <- list()
-
-for (week in 1:51){
-  anomWeekData <- anomWeeks[[week]]
-  anomTrend <- anomWeekData[anomTrendStart:(anomTrendStart + numPoints),]
-  anomTrend <- anomTrend[ -c(1,2) ]
-  anomTrend$weekID = week
-  typeof(anomTrend)
-  anomHMMTest <- append(anomHMMTest, list(anomTrend))
-}
-
-anomTestingData <- do.call(rbind, anomHMMTest)
-anomTestingData = anomTestingData[ -c(8)]
-
-anomTestNTimes <- rep(numPoints+1, length(anomWeeks))
-
-model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = anomTestingData, nstates = optStates, ntimes = anomTestNTimes)
-model2 <- setpars(model2,getpars(trainedModels[[optStates]]))
-fb <- forwardbackward(model2)
-print(fb$logLike)
+  scaledAnomTable <- anomTable
+  
+  scaledAnomTable$Global_active_power <- scale(anomTable$Global_active_power, center=1.23, scale=1.06)
+  scaledAnomTable$Global_reactive_power <- scale(anomTable$Global_reactive_power, center=0.122, scale=0.112)
+  scaledAnomTable$Global_intensity <- scale(anomTable$Global_intensity, center=4.64, scale=4.58)
+  scaledAnomTable$Sub_metering_3 <- scale(anomTable$Sub_metering_3, center=6.17, scale=8.32)
+  
+  postAnomTable <- scaledAnomTable[,c(1, 2, 3, 4, 6, 9)]
+  anomTrendStart = 6057
+  
+  nr2 <- nrow(postAnomTable)
+  anomWeeks <- split(postAnomTable, rep(1:ceiling(nr2/n), each=n, length.out=nr2))
+  anomWeeks <- anomWeeks[- 52]
+  
+  anomHMMTest <- list()
+  
+  for (week in 1:51){
+    anomWeekData <- anomWeeks[[week]]
+    anomTrend <- anomWeekData[anomTrendStart:(anomTrendStart + numPoints),]
+    anomTrend <- anomTrend[ -c(1,2) ]
+    anomTrend$weekID = week
+    typeof(anomTrend)
+    anomHMMTest <- append(anomHMMTest, list(anomTrend))
+  }
+  
+  anomTestingData <- do.call(rbind, anomHMMTest)
+  anomTestingData = anomTestingData[ -c(8)]
+  
+  anomTestNTimes <- rep(numPoints+1, length(anomWeeks))
+  
+  model2 <- depmix(response =list(Global_intensity ~ 1,Global_active_power ~ 1, Global_reactive_power ~ 1, Sub_metering_3 ~ 1),family=list(gaussian(), gaussian(), gaussian(), gaussian()), data = anomTestingData, nstates = optStates, ntimes = anomTestNTimes)
+  model2 <- setpars(model2,getpars(trainedModels[[optStates]]))
+  fb <- forwardbackward(model2)
+  print(fb$logLike)
+  cat("Norm =", fb$logLike/51, "\n")
 }
 
 anomalyDetect(anomTable1)
